@@ -29,24 +29,37 @@ namespace JOGUI
                 if (_source.SharedElements.TryGetValue(pair.Key, out SharedElement sourceElement))
                 {
                     var destinationElement = pair.Value;
+                    bool tweenAdded = false;
 
-                    var deltaPivot = destinationElement.RectTransform.pivot - sourceElement.RectTransform.pivot;
-                    var offsetX = sourceElement.RectTransform.rect.width * deltaPivot.x;
-                    var offsetY = sourceElement.RectTransform.rect.height * deltaPivot.y;
+                    System.Action onStart = () =>
+                    {
+                        sourceElement.gameObject.SetActive(false);
+                        destinationElement.CanvasGroup.ignoreParentGroups = true;
+                        tweenAdded = true;
+                    };
 
-                    var camera = Camera.main;
-                    var screenPoint = camera.WorldToScreenPoint(sourceElement.RectTransform.position) + new Vector3(offsetX, offsetY, 0);
-                    var startPosition = camera.ScreenToWorldPoint(screenPoint);
+                    System.Action<ITween> onComplete = tween =>
+                    {
+                        sourceElement.gameObject.SetActive(true);
+                        destinationElement.CanvasGroup.ignoreParentGroups = false;
+                    };
 
                     if (destinationElement.RectTransform.position != sourceElement.RectTransform.position)
                     {
+                        var deltaPivot = destinationElement.RectTransform.pivot - sourceElement.RectTransform.pivot;
+                        var offsetX = sourceElement.RectTransform.rect.width * deltaPivot.x;
+                        var offsetY = sourceElement.RectTransform.rect.height * deltaPivot.y;
+                        var camera = Camera.main;
+                        var screenPoint = camera.WorldToScreenPoint(sourceElement.RectTransform.position) + new Vector3(offsetX, offsetY, 0);
+                        var startPosition = camera.ScreenToWorldPoint(screenPoint);
+
                         tweens.Add(new UITween<Vector3>(startPosition, destinationElement.RectTransform.position)
                             .SetDelay(StartDelay)
                             .SetDuration(Duration)
                             .SetEase(EaseType)
-                            .SetOnStart(() => sourceElement.gameObject.SetActive(false))
+                            .SetOnStart(onStart)
                             .SetOnUpdate(value => destinationElement.RectTransform.position = value)
-                            .SetOnComplete(tween => sourceElement.gameObject.SetActive(true)));
+                            .SetOnComplete(onComplete));
                     }
 
                     if (destinationElement.RectTransform.rect.size != sourceElement.RectTransform.rect.size)
@@ -57,24 +70,18 @@ namespace JOGUI
                             .SetDelay(StartDelay)
                             .SetDuration(Duration)
                             .SetEase(EaseType)
+                            .SetOnStart(tweenAdded ? null : onStart)
                             .SetOnUpdate(value =>
                             {
                                 destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, value.x);
                                 destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, value.y);
-                            }));
+                            })
+                            .SetOnComplete(tweenAdded ? null : onComplete));
                     }
                 }
             }
 
             return tweens.ToArray();
-        }
-
-        private Vector3 CalculateOffset(RectTransform source, RectTransform destination)
-        {
-            var size = source.rect.size;
-            var deltaPivot = source.pivot - destination.pivot;
-            var deltaPosition = new Vector3(deltaPivot.x * size.x, deltaPivot.y * size.y);
-            return deltaPosition;
         }
     }
 }
