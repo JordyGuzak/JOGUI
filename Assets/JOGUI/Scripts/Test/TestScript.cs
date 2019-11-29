@@ -22,12 +22,12 @@ namespace JOGUI
                     .SetEaseType(EaseType.Linear);
 
                 var slideIn = new Slide(SlideMode.IN, Direction.RIGHT)
-                    .AddTarget(_profile)
+                    .AddTarget(_profile.RectTransform)
                     .SetDuration(0.5f)
                     .SetEaseType(EaseType.EaseInOutCubic);
 
                 var slideOut = new Slide(SlideMode.OUT, Direction.LEFT)
-                    .AddTarget(_home)
+                    .AddTarget(_home.RectTransform)
                     .SetDuration(0.5f)
                     .SetEaseType(EaseType.EaseInOutCubic);
 
@@ -51,12 +51,12 @@ namespace JOGUI
                     .SetEaseType(EaseType.Linear);
 
                 var slideIn = new Slide(SlideMode.IN, Direction.UP)
-                    .AddTarget(_home)
+                    .AddTarget(_home.RectTransform)
                     .SetDuration(0.5f)
                     .SetEaseType(EaseType.EaseInOutCubic);
 
                 var slideOut = new Slide(SlideMode.OUT, Direction.DOWN)
-                    .AddTarget(_profile)
+                    .AddTarget(_profile.RectTransform)
                     .SetDuration(0.5f)
                     .SetEaseType(EaseType.EaseInOutCubic);
 

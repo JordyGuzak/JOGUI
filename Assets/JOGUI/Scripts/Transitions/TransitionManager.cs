@@ -21,14 +21,15 @@ namespace JOGUI
             }
         }
 
-        public void StartTransition(View from, View to, Transition transition = null) // TODO: listen for transition complete callback/event and deactivate [from] view.
+        public void StartTransition(View from, View to, Transition transition = null, bool placeOnTop = true) // TODO: listen for transition complete callback/event and deactivate [from] view.
         {
             if (transition == null)
             {
                 transition = new Fade(0, 1).AddTarget(to);
             }
 
-            PlaceOnTop(to);
+            if (placeOnTop)
+                PlaceOnTop(to);
 
             var tweens = transition.CreateAnimators();
             UITweenRunner.Instance.Play(tweens);

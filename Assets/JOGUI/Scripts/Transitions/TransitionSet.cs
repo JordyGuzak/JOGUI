@@ -4,7 +4,7 @@ namespace JOGUI
 {
     public enum TransitionMode { PARALLEL, SEQUENTIAL }
 
-    public class TransitionSet : Transition
+    public class TransitionSet : Transition // TODO: call oncomplete on when last transition completes
     {
         public TransitionMode Mode { get; private set; }
 

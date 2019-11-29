@@ -31,18 +31,19 @@ namespace JOGUI
                     var destinationElement = pair.Value;
                     bool tweenAdded = false;
 
-                    System.Action onStart = () =>
+                    void onStart()
                     {
                         sourceElement.gameObject.SetActive(false);
                         destinationElement.CanvasGroup.ignoreParentGroups = true;
                         tweenAdded = true;
-                    };
+                    }
 
-                    System.Action<ITween> onComplete = tween =>
+                    void onComplete()
                     {
                         sourceElement.gameObject.SetActive(true);
                         destinationElement.CanvasGroup.ignoreParentGroups = false;
-                    };
+                        _onCompleteCallback?.Invoke();
+                    }
 
                     if (destinationElement.RectTransform.position != sourceElement.RectTransform.position)
                     {
@@ -70,13 +71,13 @@ namespace JOGUI
                             .SetDelay(StartDelay)
                             .SetDuration(Duration)
                             .SetEase(EaseType)
-                            .SetOnStart(tweenAdded ? null : onStart)
+                            .SetOnStart(tweenAdded ? null : (System.Action)onStart)
                             .SetOnUpdate(value =>
                             {
                                 destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, value.x);
                                 destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, value.y);
                             })
-                            .SetOnComplete(tweenAdded ? null : onComplete));
+                            .SetOnComplete(tweenAdded ? null : (System.Action)onComplete));
                     }
                 }
             }

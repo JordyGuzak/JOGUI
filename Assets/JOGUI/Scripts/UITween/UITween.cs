@@ -54,7 +54,7 @@ namespace JOGUI
         private Func<T> _getter;
         private Action _onStartCallback;
         private Action<T> _onUpdateCallback;
-        private Action<ITween> _onCompleteCallback;
+        private Action _onCompleteCallback;
 
         public UITween()
         {
@@ -184,7 +184,7 @@ namespace JOGUI
             return this;
         }
 
-        public UITween<T> SetOnComplete(Action<ITween> onCompleteCallback)
+        public UITween<T> SetOnComplete(Action onCompleteCallback)
         {
             _onCompleteCallback = onCompleteCallback;
             return this;
@@ -204,7 +204,7 @@ namespace JOGUI
 
             if (!_options.Loop)
             {
-                _onCompleteCallback?.Invoke(this);
+                _onCompleteCallback?.Invoke();
                 OnAnimationFinished?.Invoke(this);
             }
         }

@@ -10,7 +10,7 @@ namespace JOGUI
     {
         private SlideMode _mode;
         private Direction _direction;
-        private List<ISlideTarget> _targets = new List<ISlideTarget>();
+        private List<RectTransform> _targets = new List<RectTransform>();
 
         public Slide(SlideMode mode, Direction direction)
         {
@@ -24,27 +24,28 @@ namespace JOGUI
 
             for (int i = 0; i < _targets.Count; i++)
             {
-                var rectTransform = _targets[i].RectTransform;
+                var rectTransform = _targets[i];
                 var outOfScreenPosition = GetOutOfScreenPosition(rectTransform);
-                var startValue = _mode == SlideMode.OUT ? Vector2.zero : outOfScreenPosition;//rectTransform.anchoredPosition : outOfScreenPosition;
-                var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : Vector2.zero;//rectTransform.anchoredPosition;
+                var startValue = _mode == SlideMode.OUT ? Vector2.zero : outOfScreenPosition;
+                var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : Vector2.zero;
                 tweens.Add(new UITween<Vector2>(startValue, endValue)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(value => rectTransform.anchoredPosition = value));
+                    .SetOnUpdate(value => rectTransform.anchoredPosition = value)
+                    .SetOnComplete(i == 0 ? _onCompleteCallback : null));
             }
 
             return tweens.ToArray();
         }
 
-        public Slide AddTarget(ISlideTarget target)
+        public Slide AddTarget(RectTransform target)
         {
             if (target == null || _targets.Contains(target))
                 return this;
 
             if (_targets == null)
-                _targets = new List<ISlideTarget>();
+                _targets = new List<RectTransform>();
 
             _targets.Add(target);
             return this;
@@ -75,7 +76,7 @@ namespace JOGUI
                     break;
             }
 
-            return direction * offset;//rectTransform.anchoredPosition + direction * offset;
+            return direction * offset;
         }
     }
 }

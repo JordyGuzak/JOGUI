@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace JOGUI
+﻿namespace JOGUI
 {
     public abstract class Transition // start transition from here and provide oncomplete callback?
     {
@@ -8,6 +6,8 @@ namespace JOGUI
         public float Duration { get; set; } = 0.5f;
         public float TotalDuration { get { return StartDelay + Duration; } }
         public EaseType EaseType { get; set; } = EaseType.Linear;
+
+        protected System.Action _onCompleteCallback;
 
         public Transition SetStartDelay(float startDelay)
         {
@@ -27,6 +27,17 @@ namespace JOGUI
             return this;
         }
 
+        public Transition SetOnComplete(System.Action onComplete)
+        {
+            _onCompleteCallback = onComplete;
+            return this;
+        }
+
         public abstract ITween[] CreateAnimators();
+
+        public void Run()
+        {
+            UITweenRunner.Instance.Play(CreateAnimators());
+        }
     }
 }
