@@ -760,6 +760,8 @@ GameObject:
   - component: {fileID: 1180695625}
   - component: {fileID: 1180695627}
   - component: {fileID: 1180695626}
+  - component: {fileID: 1180695629}
+  - component: {fileID: 1180695628}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -824,6 +826,31 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1180695624}
   m_CullTransparentMesh: 0
+--- !u!114 &1180695628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1180695624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b99db7e13f5d9243b2e80f2cfa887ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Name: image
+--- !u!225 &1180695629
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1180695624}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 1
 --- !u!1 &1205464444
 GameObject:
   m_ObjectHideFlags: 0
@@ -1203,6 +1230,8 @@ GameObject:
   - component: {fileID: 1590794411}
   - component: {fileID: 1590794415}
   - component: {fileID: 1590794414}
+  - component: {fileID: 1590794413}
+  - component: {fileID: 1590794412}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -1229,6 +1258,31 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 500, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1590794412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1590794410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b99db7e13f5d9243b2e80f2cfa887ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Name: image
+--- !u!225 &1590794413
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1590794410}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 1
 --- !u!114 &1590794414
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1281,7 +1335,7 @@ GameObject:
   - component: {fileID: 1602955865}
   - component: {fileID: 1602955864}
   m_Layer: 5
-  m_Name: View 2
+  m_Name: View - Profile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1384,7 +1438,7 @@ GameObject:
   - component: {fileID: 1677748878}
   - component: {fileID: 1677748877}
   m_Layer: 5
-  m_Name: View 1
+  m_Name: View - Home
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

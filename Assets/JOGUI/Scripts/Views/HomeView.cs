@@ -1,7 +1,4 @@
 ﻿using JOGUI;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 public class HomeView : View
 {
@@ -19,13 +16,26 @@ public class HomeView : View
                 .SetDuration(0.5f)
                 .SetEaseType(EaseType.EaseInOutCubic);
 
+            var shared = new SharedElementsTransition(this, profile)
+                .SetDuration(1f)
+                .SetEaseType(EaseType.EaseInOutCubic);
+
+            var fadeIn = new Fade(0, 1)
+                .AddTarget(profile)
+                .SetDuration(1f)
+                .SetEaseType(EaseType.EaseInOutCubic);
+
+            var fadeOut = new Fade(1, 0)
+                 .AddTarget(this)
+                 .SetDuration(1f)
+                 .SetEaseType(EaseType.EaseInOutCubic);
+
             var transitionSet = new TransitionSet(TransitionMode.PARALLEL)
-                .Add(slideOut)
-                .Add(slideIn);
+                .Add(fadeIn)
+                .Add(fadeOut)
+                .Add(shared);
 
             TransitionManager.Instance.StartTransition(this, profile, transitionSet);
         }
-
-        //Navigate(typeof(ProfileView), new Slide(SlideMode.IN, Direction.LEFT).AddTarget();
     }
 }

@@ -52,6 +52,7 @@ namespace JOGUI
         private bool _play;
         private float _elapsedTime;
         private Func<T> _getter;
+        private Action _onStartCallback;
         private Action<T> _onUpdateCallback;
         private Action<ITween> _onCompleteCallback;
 
@@ -73,7 +74,7 @@ namespace JOGUI
             if (!_play)
                 return;
 
-            _elapsedTime += UnityEngine.Time.unscaledDeltaTime;
+            _elapsedTime += UnityEngine.Time.deltaTime;
 
             if (_elapsedTime < _options.StartDelay)
                 return;
@@ -94,6 +95,7 @@ namespace JOGUI
             if (_play)
                 return;
 
+            _onStartCallback?.Invoke();
             _play = true;
         }
 
@@ -167,6 +169,12 @@ namespace JOGUI
         public UITween<T> SetTo(T to)
         {
             _endValue = to;
+            return this;
+        }
+
+        public UITween<T> SetOnStart(Action onStart)
+        {
+            _onStartCallback = onStart;
             return this;
         }
 

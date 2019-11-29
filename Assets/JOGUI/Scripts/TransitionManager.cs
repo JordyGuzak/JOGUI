@@ -21,15 +21,13 @@ namespace JOGUI
             }
         }
 
-        public void StartTransition(View from, View to, Transition transition = null)
+        public void StartTransition(View from, View to, Transition transition = null) // TODO: listen for transition complete callback/event and deactivate [from] view.
         {
             if (transition == null)
             {
                 transition = new Fade(0, 1).AddTarget(to);
             }
 
-            //from.gameObject.SetActive(false);
-            //to.gameObject.SetActive(true);
             PlaceOnTop(to);
 
             var tweens = transition.CreateAnimators();
