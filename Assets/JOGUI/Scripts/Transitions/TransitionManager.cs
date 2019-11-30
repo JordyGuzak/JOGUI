@@ -32,7 +32,7 @@ namespace JOGUI
             source.OnExit();
             destination.OnEnter(bundle ?? new Dictionary<string, object>());
 
-            source.gameObject.SetActive(true);
+            destination.gameObject.SetActive(true);
 
             if (placeOnTop)
             {
