@@ -22,34 +22,29 @@ namespace JOGUI
             }
         }
 
-        public void StartTransition(View from, View to, Transition transition = null, bool placeOnTop = true, Dictionary<string, object> bundle = null) // TODO: create click blocker and destroy when transition completes
+        public void StartTransition(View source, View destination, Transition transition = null, Dictionary<string, object> bundle = null, bool placeOnTop = true) // TODO: create click blocker and destroy when transition completes
         {
             if (transition == null)
             {
-                transition = new Fade(0, 1).AddTarget(to);
+                transition = new Fade(0, 1).AddTarget(destination);
             }
 
-            from.OnExit();
-            to.OnEnter(bundle ?? new Dictionary<string, object>());
+            source.OnExit();
+            destination.OnEnter(bundle ?? new Dictionary<string, object>());
+
+            source.gameObject.SetActive(true);
 
             if (placeOnTop)
-                PlaceOnTop(to);
+            {
+                destination.transform.SetAsLastSibling();
+            }
 
             transition.SetOnComplete(() =>
             {
-                from.gameObject.SetActive(false);
+                source.gameObject.SetActive(false);
             });
 
             transition.Run();
-        }
-
-        private void PlaceOnTop(View view)
-        {
-            view.transform.gameObject.SetActive(true);
-            if (view.transform.parent)
-            {
-                view.transform.SetSiblingIndex(view.transform.parent.childCount - 1);
-            }
         }
     }
 }
