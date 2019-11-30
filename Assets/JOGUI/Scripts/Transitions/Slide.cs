@@ -43,9 +43,6 @@ namespace JOGUI
             if (target == null || _targets.Contains(target))
                 return this;
 
-            if (_targets == null)
-                _targets = new List<RectTransform>();
-
             _targets.Add(target);
             return this;
         }
