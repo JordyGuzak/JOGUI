@@ -52,6 +52,7 @@ namespace JOGUI
 
         private void OnLastAnimationFinished(ITween tween)
         {
+            tween.OnAnimationFinished -= OnLastAnimationFinished;
             _onCompleteCallback?.Invoke();
         }
     }
