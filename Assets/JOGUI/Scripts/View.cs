@@ -33,6 +33,21 @@ namespace JOGUI
         }
 
         /// <summary>
+        /// Lifecycle method that gets called by the TransitionManager when this View enters the screen.
+        /// </summary>
+        /// <param name="data"></param>
+        public virtual void OnEnter(Dictionary<string, object> bundle)
+        {
+        }
+
+        /// <summary>
+        /// Lifecycle method that gets called by the TransitionManager when this View exits the screen.
+        /// </summary>
+        public virtual void OnExit()
+        {
+        }
+
+        /// <summary>
         /// Finds all SharedElements in children and initializes the SharedElements dictionary
         /// </summary>
         private void SetupSharedElements()

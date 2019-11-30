@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace JOGUI
 {
@@ -21,12 +22,15 @@ namespace JOGUI
             }
         }
 
-        public void StartTransition(View from, View to, Transition transition = null, bool placeOnTop = true) // TODO: create click blocker and destroy when transition completes
+        public void StartTransition(View from, View to, Transition transition = null, bool placeOnTop = true, Dictionary<string, object> bundle = null) // TODO: create click blocker and destroy when transition completes
         {
             if (transition == null)
             {
                 transition = new Fade(0, 1).AddTarget(to);
             }
+
+            from.OnExit();
+            to.OnEnter(bundle ?? new Dictionary<string, object>());
 
             if (placeOnTop)
                 PlaceOnTop(to);

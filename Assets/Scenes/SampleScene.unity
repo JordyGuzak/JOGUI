@@ -2810,6 +2810,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _transitionDuration: 0.75
+  _descriptionText: {fileID: 2129178013}
 --- !u!225 &1602955865
 CanvasGroup:
   m_ObjectHideFlags: 0
