@@ -1,4 +1,6 @@
-﻿namespace JOGUI
+﻿using System.Linq;
+
+namespace JOGUI
 {
     public abstract class Transition // start transition from here and provide oncomplete callback?
     {
@@ -37,7 +39,20 @@
 
         public void Run()
         {
-            UITweenRunner.Instance.Play(CreateAnimators());
+            var tweens = CreateAnimators();
+
+            var longest = tweens.OrderByDescending(t => t.TotalDuration).FirstOrDefault();
+            if (longest != null)
+            {
+                longest.OnAnimationFinished += OnLastAnimationFinished;
+            }
+
+            UITweenRunner.Instance.Play(tweens);
+        }
+
+        private void OnLastAnimationFinished(ITween tween)
+        {
+            _onCompleteCallback?.Invoke();
         }
     }
 }

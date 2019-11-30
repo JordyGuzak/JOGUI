@@ -25,8 +25,7 @@ namespace JOGUI
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(_targets[i].SetAlpha)
-                    .SetOnComplete(i == 0 ? _onCompleteCallback : null);
+                    .SetOnUpdate(_targets[i].SetAlpha);
             }
 
             return tweens;

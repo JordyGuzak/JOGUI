@@ -3,8 +3,11 @@ using JOGUI;
 
 public class HomeView : View
 {
+    [SerializeField] private float _transitionDuration = 1f;
     [SerializeField] private RectTransform _drawer;
     [SerializeField] private Blocker _blocker;
+
+    private bool _closing;
 
     private void OnEnable()
     {
@@ -22,16 +25,16 @@ public class HomeView : View
         {
             var fadeIn = new Fade(0, 1)
                 .AddTarget(profile)
-                .SetDuration(0.5f)
+                .SetDuration(_transitionDuration)
                 .SetEaseType(EaseType.EaseInOutCubic);
 
             var fadeOut = new Fade(1, 0)
                  .AddTarget(this)
-                 .SetDuration(0.5f)
+                 .SetDuration(_transitionDuration)
                  .SetEaseType(EaseType.EaseInOutCubic);
 
             var shared = new SharedElementsTransition(this, profile)
-                .SetDuration(0.5f)
+                .SetDuration(_transitionDuration)
                 .SetEaseType(EaseType.EaseInOutCubic);
 
             var transitionSet = new TransitionSet(TransitionMode.PARALLEL)
@@ -50,11 +53,11 @@ public class HomeView : View
         var transition = new TransitionSet(TransitionMode.PARALLEL)
             .Add(new Slide(SlideMode.IN, Direction.RIGHT)
                 .AddTarget(_drawer)
-                .SetDuration(0.5f)
+                .SetDuration(_transitionDuration)
                 .SetEaseType(EaseType.EaseInOutCubic))
             .Add(new Fade(0, 0.66f)
                 .AddTarget(_blocker)
-                .SetDuration(0.5f)
+                .SetDuration(_transitionDuration)
                 .SetEaseType(EaseType.EaseInOutCubic));
 
         transition.Run();
@@ -62,16 +65,24 @@ public class HomeView : View
 
     public void CloseDrawerMenu()
     {
+        if (_closing) return;
+
+        _closing = true;
+
         var transition = new TransitionSet(TransitionMode.PARALLEL)
             .Add(new Slide(SlideMode.OUT, Direction.RIGHT)
                 .AddTarget(_drawer)
-                .SetDuration(0.5f)
+                .SetDuration(_transitionDuration)
                 .SetEaseType(EaseType.EaseInOutCubic))
             .Add(new Fade(0.66f, 0)
                 .AddTarget(_blocker)
-                .SetDuration(0.5f)
-                .SetEaseType(EaseType.EaseInOutCubic)
-                .SetOnComplete(() => _blocker.gameObject.SetActive(false)));
+                .SetDuration(_transitionDuration)
+                .SetEaseType(EaseType.EaseInOutCubic))
+            .SetOnComplete(() =>
+            {
+                _blocker.gameObject.SetActive(false);
+                _closing = false;
+            });
 
         transition.Run();
     }

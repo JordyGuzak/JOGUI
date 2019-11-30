@@ -21,7 +21,7 @@ namespace JOGUI
             }
         }
 
-        public void StartTransition(View from, View to, Transition transition = null, bool placeOnTop = true) // TODO: listen for transition complete callback/event and deactivate [from] view.
+        public void StartTransition(View from, View to, Transition transition = null, bool placeOnTop = true)
         {
             if (transition == null)
             {
@@ -31,8 +31,12 @@ namespace JOGUI
             if (placeOnTop)
                 PlaceOnTop(to);
 
-            var tweens = transition.CreateAnimators();
-            UITweenRunner.Instance.Play(tweens);
+            transition.SetOnComplete(() =>
+            {
+                from.gameObject.SetActive(false);
+            });
+
+            transition.Run();
         }
 
         private void PlaceOnTop(View view)

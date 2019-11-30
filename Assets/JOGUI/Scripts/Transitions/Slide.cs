@@ -32,8 +32,7 @@ namespace JOGUI
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(value => rectTransform.anchoredPosition = value)
-                    .SetOnComplete(i == 0 ? _onCompleteCallback : null));
+                    .SetOnUpdate(value => rectTransform.anchoredPosition = value));
             }
 
             return tweens.ToArray();

@@ -11,6 +11,10 @@ namespace JOGUI
         event LoopPointReachedHandler OnLoopPointReached;
         event AnimationFinishedHandler OnAnimationFinished;
         Guid Id { get; }
+        float StartDelay { get; set; }
+        float Duration { get; set; }
+        float TotalDuration { get; }
+        float Time { get; set; }
         void Tick();
         void Play();
         void PlayFromStart();
@@ -36,8 +40,37 @@ namespace JOGUI
         public event LoopPointReachedHandler OnLoopPointReached;
         public event AnimationFinishedHandler OnAnimationFinished;
 
+        /// <summary>
+        /// The unique identifier of this tween.
+        /// </summary>
         public Guid Id => _id;
 
+        /// <summary>
+        /// The amount of time in seconds before the actual animation starts.
+        /// </summary>
+        public float StartDelay
+        {
+            get => _options.StartDelay;
+            set => _options.StartDelay = Mathf.Clamp(value, 0, float.MaxValue);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public float Duration
+        {
+            get => _options.Duration;
+            set => _options.Duration = Mathf.Clamp(value, 0, float.MaxValue);
+        }
+
+        /// <summary>
+        /// The total amount of time it takes to run this tween including start delay and animation duration.
+        /// </summary>
+        public float TotalDuration => _options.StartDelay + _options.Duration;
+
+        /// <summary>
+        /// Get and set the elapsed time of this animation.
+        /// </summary>
         public float Time
         {
             get => _elapsedTime;

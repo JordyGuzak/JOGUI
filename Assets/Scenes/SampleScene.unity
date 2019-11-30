@@ -3099,6 +3099,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebea0ad34b6e71b4cbd1533c18dfb643, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _transitionDuration: 0.75
 --- !u!225 &1602955865
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -3165,6 +3166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ba668599c30ae1479683ea4d20cfc58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _transitionDuration: 0.75
   _drawer: {fileID: 2068446927}
   _blocker: {fileID: 1725084801}
 --- !u!225 &1677748878
