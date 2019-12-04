@@ -32,7 +32,7 @@ public class ProfileView : View
     {
         if (ViewGroup.TryGetView(typeof(HomeView), out View home))
         {
-            var shared = new SharedElementsTransition(this, home)
+            var shared = new SharedElementsTransition(SharedElements, home.SharedElements)
                 .SetDuration(_transitionDuration)
                 .SetEaseType(EaseType.EaseInOutCubic);
 

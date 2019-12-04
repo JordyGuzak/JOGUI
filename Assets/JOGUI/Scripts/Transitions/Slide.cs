@@ -1,4 +1,4 @@
-﻿
+﻿ 
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -26,9 +26,9 @@ namespace JOGUI
             for (int i = 0; i < _targets.Count; i++)
             {
                 var rectTransform = _targets[i];
-                var outOfScreenPosition = GetOutOfScreenPosition(rectTransform);
-                var startValue = _mode == SlideMode.OUT ? Vector2.zero : outOfScreenPosition;
-                var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : Vector2.zero;
+                var offset = GetOffset();
+                var startValue = _mode == SlideMode.OUT ? Vector2.zero : offset;
+                var endValue = _mode == SlideMode.OUT ? offset : Vector2.zero;
                 tweens.Add(new UITween<Vector2>(startValue, endValue)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
@@ -63,7 +63,7 @@ namespace JOGUI
             return this;
         }
 
-        private Vector2 GetOutOfScreenPosition(RectTransform rectTransform)
+        private Vector2 GetOffset()
         {
             Vector2 direction = Vector2.zero;
             float offset = 0;

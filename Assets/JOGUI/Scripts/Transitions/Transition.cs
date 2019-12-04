@@ -2,7 +2,7 @@
 
 namespace JOGUI
 {
-    public abstract class Transition // start transition from here and provide oncomplete callback?
+    public abstract class Transition
     {
         public float StartDelay { get; set; } = 0f;
         public float Duration { get; set; } = 0.5f;

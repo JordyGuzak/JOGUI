@@ -29,6 +29,15 @@ namespace JOGUI
             return this;
         }
 
+        public TransitionSet Remove(Transition transition)
+        {
+            if (_transitions.Contains(transition))
+            {
+                _transitions.Remove(transition);
+            }
+            return this;
+        }
+
         public override ITween[] CreateAnimators()
         {
             var tweens = new List<ITween>();

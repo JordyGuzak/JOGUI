@@ -11,22 +11,22 @@ namespace JOGUI
 
     public class SharedElementsTransition : Transition
     {
-        private View _source;
-        private View _destination;
+        private Dictionary<string, SharedElement> _sourceElements;
+        private Dictionary<string, SharedElement> _destinationElements;
 
-        public SharedElementsTransition(View source, View destination)
+        public SharedElementsTransition(Dictionary<string, SharedElement> sourceElements, Dictionary<string, SharedElement> destinationElements)
         {
-            _source = source;
-            _destination = destination;
+            _sourceElements = sourceElements;
+            _destinationElements = destinationElements;
         }
 
         public override ITween[] CreateAnimators()
         {
             var tweens = new List<ITween>();
 
-            foreach (var pair in _destination.SharedElements)
+            foreach (var pair in _destinationElements)
             {
-                if (_source.SharedElements.TryGetValue(pair.Key, out SharedElement sourceElement))
+                if (_sourceElements.TryGetValue(pair.Key, out SharedElement sourceElement))
                 {
                     var destinationElement = pair.Value;
                     bool tweenAdded = false;
@@ -87,7 +87,7 @@ namespace JOGUI
 
         public override Transition Reversed()
         {
-            return new SharedElementsTransition(_destination, _source)
+            return new SharedElementsTransition(_destinationElements, _sourceElements)
                 .SetStartDelay(StartDelay)
                 .SetDuration(Duration)
                 .SetEaseType(EaseType)

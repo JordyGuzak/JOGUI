@@ -33,7 +33,7 @@ public class HomeView : View
                  .SetDuration(_transitionDuration)
                  .SetEaseType(EaseType.EaseInOutCubic);
 
-            var shared = new SharedElementsTransition(this, profile)
+            var shared = new SharedElementsTransition(SharedElements, profile.SharedElements)
                 .SetDuration(_transitionDuration)
                 .SetEaseType(EaseType.EaseInOutCubic);
 

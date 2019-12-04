@@ -24,7 +24,7 @@ namespace JOGUI
         private CanvasGroup _canvasGroup;
 
         /// <summary>
-        /// Initialize is called by the ViewGroup to ensure everything is setup properly
+        /// Initialize is called by the ViewGroup to setup navigation and shared elements
         /// </summary>
         public void Initialize(ViewGroup viewGroup)
         {
@@ -68,7 +68,10 @@ namespace JOGUI
             transform.localScale = scale;
         }
 
-        // Sets the size of the RectTransform on this GameObject
+        /// <summary>
+        /// Sets the size of the RectTransform on this GameObject
+        /// </summary>
+        /// <param name="size"></param>
         public void SetSize(Vector2 size)
         {
             RectTransform.sizeDelta = size;
