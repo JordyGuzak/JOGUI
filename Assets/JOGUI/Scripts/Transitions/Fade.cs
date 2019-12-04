@@ -31,6 +31,21 @@ namespace JOGUI
             return tweens;
         }
 
+        public override Transition Reversed()
+        {
+            var reversed = new Fade(_endAlpha, _startAlpha);
+
+            foreach (var target in _targets)
+            {
+                reversed.AddTarget(target);
+            }
+
+            return reversed.SetStartDelay(StartDelay)
+                .SetDuration(Duration)
+                .SetEaseType(EaseType)
+                .SetOnComplete(_onCompleteCallback);
+        }
+
         public Fade AddTarget(IFadeTarget target)
         {
             if (target == null || _targets.Contains(target))

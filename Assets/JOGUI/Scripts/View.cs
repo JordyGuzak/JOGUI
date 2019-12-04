@@ -48,23 +48,6 @@ namespace JOGUI
         }
 
         /// <summary>
-        /// Finds all SharedElements in children and initializes the SharedElements dictionary
-        /// </summary>
-        private void SetupSharedElements()
-        {
-            SharedElements = new Dictionary<string, SharedElement>();
-
-            var sharedElements = GetComponentsInChildren<SharedElement>(true);
-            for (int i = 0; i < sharedElements.Length; i++)
-            {
-                if (string.IsNullOrWhiteSpace(sharedElements[i].name))
-                    continue;
-
-                SharedElements.Add(sharedElements[i].Name, sharedElements[i]);
-            }
-        }
-
-        /// <summary>
         /// Sets the alpha property of the CanvasGroup on this GameObject
         /// </summary>
         /// <param name="alpha"></param>
@@ -94,6 +77,23 @@ namespace JOGUI
         protected void Navigate(System.Type viewType, Transition transition)
         {
             ViewGroup.SetActiveView(viewType, transition);
+        }
+
+        /// <summary>
+        /// Finds all SharedElements in children and initializes the SharedElements dictionary
+        /// </summary>
+        private void SetupSharedElements()
+        {
+            SharedElements = new Dictionary<string, SharedElement>();
+
+            var sharedElements = GetComponentsInChildren<SharedElement>(true);
+            for (int i = 0; i < sharedElements.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(sharedElements[i].name))
+                    continue;
+
+                SharedElements.Add(sharedElements[i].Name, sharedElements[i]);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace JOGUI
@@ -38,6 +39,21 @@ namespace JOGUI
             return tweens.ToArray();
         }
 
+        public override Transition Reversed()
+        {
+            var reversed = new Slide(GetOppositeSlideMode(_mode), GetOppositeDirection(_direction));
+
+            foreach (var target in _targets)
+            {
+                reversed.AddTarget(target);
+            }
+
+            return reversed.SetStartDelay(StartDelay)
+                .SetDuration(Duration)
+                .SetEaseType(EaseType)
+                .SetOnComplete(_onCompleteCallback);
+        }
+
         public Slide AddTarget(RectTransform target)
         {
             if (target == null || _targets.Contains(target))
@@ -73,6 +89,28 @@ namespace JOGUI
             }
 
             return direction * offset;
+        }
+
+        private SlideMode GetOppositeSlideMode(SlideMode mode)
+        {
+            return mode == SlideMode.IN ? SlideMode.OUT : SlideMode.IN;
+        }
+
+        private Direction GetOppositeDirection(Direction direction)
+        {
+            switch (direction)
+            {
+                case Direction.LEFT:
+                    return Direction.RIGHT;
+                case Direction.RIGHT:
+                    return Direction.LEFT;
+                case Direction.UP:
+                    return Direction.DOWN;
+                case Direction.DOWN:
+                    return Direction.UP;
+                default:
+                    return Direction.LEFT;
+            }
         }
     }
 }

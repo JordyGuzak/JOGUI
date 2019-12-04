@@ -36,6 +36,7 @@ namespace JOGUI
         }
 
         public abstract ITween[] CreateAnimators();
+        public abstract Transition Reversed();
 
         public void Run()
         {

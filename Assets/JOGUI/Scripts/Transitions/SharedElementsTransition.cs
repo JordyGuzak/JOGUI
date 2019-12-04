@@ -84,5 +84,14 @@ namespace JOGUI
 
             return tweens.ToArray();
         }
+
+        public override Transition Reversed()
+        {
+            return new SharedElementsTransition(_destination, _source)
+                .SetStartDelay(StartDelay)
+                .SetDuration(Duration)
+                .SetEaseType(EaseType)
+                .SetOnComplete(_onCompleteCallback);
+        }
     }
 }

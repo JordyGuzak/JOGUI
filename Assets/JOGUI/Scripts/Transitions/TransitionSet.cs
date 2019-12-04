@@ -65,5 +65,21 @@ namespace JOGUI
 
             return tweens.ToArray();
         }
+
+        public override Transition Reversed()
+        {
+            var reversed = new TransitionSet(Mode);
+
+            for (int i = _transitions.Count - 1; i <= 0; i--)
+            {
+                reversed.Add(_transitions[i].Reversed());
+            }
+
+            return reversed
+                .SetStartDelay(StartDelay)
+                .SetDuration(Duration)
+                .SetEaseType(EaseType)
+                .SetOnComplete(_onCompleteCallback);
+        }
     }
 }
