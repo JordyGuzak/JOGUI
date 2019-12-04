@@ -77,26 +77,48 @@ namespace JOGUI
             RectTransform.sizeDelta = size;
         }
 
-        protected void Navigate(System.Type viewType, Transition transition)
-        {
-            ViewGroup.SetActiveView(viewType, transition);
-        }
-
         /// <summary>
-        /// Finds all SharedElements in children and initializes the SharedElements dictionary
+        /// Initializes the SharedElements dictionary
         /// </summary>
         private void SetupSharedElements()
         {
             SharedElements = new Dictionary<string, SharedElement>();
 
-            var sharedElements = GetComponentsInChildren<SharedElement>(true);
+            var sharedElements = GetSharedElementsInChildren(RectTransform);
             for (int i = 0; i < sharedElements.Length; i++)
             {
-                if (string.IsNullOrWhiteSpace(sharedElements[i].name))
+                if (string.IsNullOrWhiteSpace(sharedElements[i].Name))
                     continue;
 
                 SharedElements.Add(sharedElements[i].Name, sharedElements[i]);
             }
+        }
+
+        /// <summary>
+        /// Recursively finds all SharedElements in rectTransform or any of its children (except for the children of Views)
+        /// </summary>
+        /// <param name="rectTransform"></param>
+        /// <returns></returns>
+        private SharedElement[] GetSharedElementsInChildren(RectTransform rectTransform)
+        {
+            var sharedElements = new List<SharedElement>();
+
+            if (rectTransform.TryGetComponent(out SharedElement sharedElement))
+            {
+                sharedElements.Add(sharedElement);
+            }
+
+            for (int i = 0; i < rectTransform.childCount; i++)
+            {
+                if (rectTransform.GetChild(i).TryGetComponent(out View view))
+                {
+                    continue;
+                }
+
+                sharedElements.AddRange(GetSharedElementsInChildren((RectTransform)rectTransform.GetChild(i)));
+            }
+
+            return sharedElements.ToArray();
         }
     }
 }
