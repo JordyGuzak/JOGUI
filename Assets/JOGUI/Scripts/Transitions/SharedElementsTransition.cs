@@ -47,12 +47,6 @@ namespace JOGUI
 
                     if (destinationElement.RectTransform.position != sourceElement.RectTransform.position)
                     {
-                        //var deltaPivot = destinationElement.RectTransform.pivot - sourceElement.RectTransform.pivot;
-                        //var offsetX = sourceElement.RectTransform.rect.width * deltaPivot.x;
-                        //var offsetY = sourceElement.RectTransform.rect.height * deltaPivot.y;
-                        //var camera = Camera.main;
-                        //var screenPoint = camera.WorldToScreenPoint(sourceElement.RectTransform.position) + new Vector3(offsetX, offsetY, 0);
-                        //var startPosition = camera.ScreenToWorldPoint(screenPoint);
                         var startPosition = GetStartPosition(sourceElement.RectTransform, destinationElement.RectTransform);
 
                         tweens.Add(new UITween<Vector3>(startPosition, destinationElement.RectTransform.position)
