@@ -20,6 +20,8 @@ namespace JOGUI
 
         public Dictionary<string, SharedElement> SharedElements { get; private set; }
 
+        public Dictionary<string, object> Bundle { get; private set; }
+
         public ViewGroup ViewGroup { get; private set; }
         private CanvasGroup _canvasGroup;
 
@@ -38,6 +40,7 @@ namespace JOGUI
         /// <param name="data"></param>
         public virtual void OnEnter(Dictionary<string, object> bundle)
         {
+            Bundle = bundle;
         }
 
         /// <summary>
@@ -45,6 +48,28 @@ namespace JOGUI
         /// </summary>
         public virtual void OnExit()
         {
+        }
+
+        /// <summary>
+        /// The transition that is run when this View enters the screen.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Transition GetEnterTransition()
+        {
+            return new Fade(0, 1)
+                .AddTarget(this)
+                .SetDuration(0.75f);
+        }
+
+        /// <summary>
+        /// The transition that is run when this View exits the screen.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Transition GetExitTransition()
+        {
+            return new Fade(1, 0)
+                .AddTarget(this)
+                .SetDuration(0.75f);
         }
 
         /// <summary>
