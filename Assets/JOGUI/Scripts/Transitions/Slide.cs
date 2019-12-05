@@ -11,11 +11,12 @@ namespace JOGUI
     {
         private SlideMode _mode;
         private Direction _direction;
+        private Vector2 _anchoredPosition;
         private List<RectTransform> _targets = new List<RectTransform>();
 
-
-        public Slide(SlideMode mode, Direction direction)
+        public Slide(Vector2 anchoredPosition, SlideMode mode, Direction direction)
         {
+            _anchoredPosition = anchoredPosition;
             _mode = mode;
             _direction = direction;
         }
@@ -28,8 +29,8 @@ namespace JOGUI
             {
                 var rectTransform = _targets[i];
                 var outOfScreenPosition = GetOutOfScreenAnchoredPosition(rectTransform, _direction);
-                var startValue = _mode == SlideMode.OUT ? rectTransform.anchoredPosition : outOfScreenPosition;
-                var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : rectTransform.anchoredPosition;
+                var startValue = _mode == SlideMode.OUT ? _anchoredPosition : outOfScreenPosition;
+                var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : _anchoredPosition;
                 tweens.Add(new UITween<Vector2>(startValue, endValue)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
@@ -42,7 +43,7 @@ namespace JOGUI
 
         public override Transition Reversed()
         {
-            var reversed = new Slide(GetOppositeSlideMode(_mode), GetOppositeDirection(_direction));
+            var reversed = new Slide(_anchoredPosition, GetOppositeSlideMode(_mode), _direction);
 
             foreach (var target in _targets)
             {
@@ -67,23 +68,6 @@ namespace JOGUI
         private SlideMode GetOppositeSlideMode(SlideMode mode)
         {
             return mode == SlideMode.IN ? SlideMode.OUT : SlideMode.IN;
-        }
-
-        private Direction GetOppositeDirection(Direction direction)
-        {
-            switch (direction)
-            {
-                case Direction.LEFT:
-                    return Direction.RIGHT;
-                case Direction.RIGHT:
-                    return Direction.LEFT;
-                case Direction.UP:
-                    return Direction.DOWN;
-                case Direction.DOWN:
-                    return Direction.UP;
-                default:
-                    return Direction.LEFT;
-            }
         }
 
         private Vector2 GetOutOfScreenAnchoredPosition(RectTransform rectTransform, Direction direction)

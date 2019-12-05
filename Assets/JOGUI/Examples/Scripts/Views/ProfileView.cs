@@ -10,32 +10,33 @@ public class ProfileView : View
 
     private Vector2 _descriptionAnchoredPosition;
 
+    private Transition _descriptionTransition;
+
     public override void Initialize(ViewGroup viewGroup)
     {
         base.Initialize(viewGroup);
         _descriptionAnchoredPosition = _descriptionText.rectTransform.anchoredPosition;
+
+        _descriptionTransition = new Slide(_descriptionText.rectTransform.anchoredPosition, SlideMode.IN, Direction.DOWN)
+            .AddTarget((RectTransform)_descriptionText.transform)
+            .SetDuration(_transitionDuration)
+            .SetEaseType(EaseType.EaseInOutCubic);
     }
 
     public override void OnEnter(Dictionary<string, object> bundle)
     {
-        _descriptionText.rectTransform.anchoredPosition = _descriptionAnchoredPosition;
-
-        var slideIn = new Slide(SlideMode.IN, Direction.DOWN)
-            .AddTarget((RectTransform)_descriptionText.transform)
-            .SetDuration(_transitionDuration)
-            .SetEaseType(EaseType.EaseInOutCubic);
-
-        slideIn.Run();
+        _descriptionTransition.Run();
     }
 
     public override void OnExit()
     {
-        var slideOut = new Slide(SlideMode.OUT, Direction.DOWN)
-            .AddTarget((RectTransform)_descriptionText.transform)
-            .SetDuration(_transitionDuration)
-            .SetEaseType(EaseType.EaseInOutCubic);
+        //var slideOut = new Slide(SlideMode.OUT, Direction.DOWN)
+        //    .AddTarget((RectTransform)_descriptionText.transform)
+        //    .SetDuration(_transitionDuration)
+        //    .SetEaseType(EaseType.EaseInOutCubic);
 
-        slideOut.Run();
+        //slideOut.Run();
+        _descriptionTransition.Reversed().Run();
     }
 
     public void GoToHome()

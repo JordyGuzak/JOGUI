@@ -10,10 +10,7 @@ public class HomeView : View
     private Vector2 _drawerPosition;
     private bool _closing;
 
-    private void Awake()
-    {
-        _drawerPosition = _drawer.anchoredPosition;
-    }
+    private Transition _drawerTransition;
 
     private void OnEnable()
     {
@@ -23,6 +20,21 @@ public class HomeView : View
     private void OnDisable()
     {
         _blocker.onPointerClick.RemoveListener(CloseDrawerMenu);
+    }
+
+    public override void Initialize(ViewGroup viewGroup)
+    {
+        base.Initialize(viewGroup);
+
+        _drawerTransition = new TransitionSet(TransitionMode.PARALLEL)
+            .Add(new Slide(_drawer.anchoredPosition, SlideMode.IN, Direction.RIGHT)
+                .AddTarget(_drawer)
+                .SetDuration(_transitionDuration)
+                .SetEaseType(EaseType.EaseInOutCubic))
+            .Add(new Fade(0, 0.66f)
+                .AddTarget(_blocker)
+                .SetDuration(_transitionDuration)
+                .SetEaseType(EaseType.EaseInOutCubic));
     }
 
     public void GoToProfile()
@@ -57,19 +69,7 @@ public class HomeView : View
         _drawer.gameObject.SetActive(true);
         _blocker.gameObject.SetActive(true);
 
-        _drawer.anchoredPosition = _drawerPosition;
-
-        var transition = new TransitionSet(TransitionMode.PARALLEL)
-            .Add(new Slide(SlideMode.IN, Direction.RIGHT)
-                .AddTarget(_drawer)
-                .SetDuration(_transitionDuration)
-                .SetEaseType(EaseType.EaseInOutCubic))
-            .Add(new Fade(0, 0.66f)
-                .AddTarget(_blocker)
-                .SetDuration(_transitionDuration)
-                .SetEaseType(EaseType.EaseInOutCubic));
-
-        transition.Run();
+        _drawerTransition.Run();
     }
 
     public void CloseDrawerMenu()
@@ -78,22 +78,32 @@ public class HomeView : View
 
         _closing = true;
 
-        var transition = new TransitionSet(TransitionMode.PARALLEL)
-            .Add(new Slide(SlideMode.OUT, Direction.RIGHT)
-                .AddTarget(_drawer)
-                .SetDuration(_transitionDuration)
-                .SetEaseType(EaseType.EaseInOutCubic))
-            .Add(new Fade(0.66f, 0)
-                .AddTarget(_blocker)
-                .SetDuration(_transitionDuration)
-                .SetEaseType(EaseType.EaseInOutCubic))
+        //var transition = new TransitionSet(TransitionMode.PARALLEL)
+        //    .Add(new Slide(_drawer.anchoredPosition, SlideMode.OUT, Direction.RIGHT)
+        //        .AddTarget(_drawer)
+        //        .SetDuration(_transitionDuration)
+        //        .SetEaseType(EaseType.EaseInOutCubic))
+        //    .Add(new Fade(0.66f, 0)
+        //        .AddTarget(_blocker)
+        //        .SetDuration(_transitionDuration)
+        //        .SetEaseType(EaseType.EaseInOutCubic))
+        //    .SetOnComplete(() =>
+        //    {
+        //        _blocker.gameObject.SetActive(false);
+        //        _drawer.gameObject.SetActive(false);
+        //        _closing = false;
+        //    });
+
+        //transition.Run();
+
+        _drawerTransition
+            .Reversed()
             .SetOnComplete(() =>
             {
                 _blocker.gameObject.SetActive(false);
                 _drawer.gameObject.SetActive(false);
                 _closing = false;
-            });
-
-        transition.Run();
+            })
+            .Run();
     }
 }

@@ -79,7 +79,7 @@ namespace JOGUI
         {
             var reversed = new TransitionSet(Mode);
 
-            for (int i = _transitions.Count - 1; i <= 0; i--)
+            for (int i = _transitions.Count - 1; i >= 0; i--)
             {
                 reversed.Add(_transitions[i].Reversed());
             }
