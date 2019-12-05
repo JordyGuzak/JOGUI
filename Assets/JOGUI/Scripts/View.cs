@@ -4,7 +4,7 @@ using UnityEngine;
 namespace JOGUI
 {
     [RequireComponent(typeof(CanvasGroup))]
-    public class View : MonoBehaviour, IFadeTarget, ISlideTarget, IScaleTarget, ISizeTarget
+    public class View : MonoBehaviour, IFadeTarget, ISlideTarget, IScaleTarget, ISizeTarget // Add enter, exit, return and re-enter transitions?
     {
         private RectTransform _rectTransform;
         public RectTransform RectTransform
@@ -26,7 +26,7 @@ namespace JOGUI
         /// <summary>
         /// Initialize is called by the ViewGroup to setup navigation and shared elements
         /// </summary>
-        public void Initialize(ViewGroup viewGroup)
+        public virtual void Initialize(ViewGroup viewGroup)
         {
             ViewGroup = viewGroup;
             SetupSharedElements();

@@ -8,8 +8,18 @@ public class ProfileView : View
     [SerializeField] private float _transitionDuration = 1f;
     [SerializeField] private TMP_Text _descriptionText;
 
+    private Vector2 _descriptionAnchoredPosition;
+
+    public override void Initialize(ViewGroup viewGroup)
+    {
+        base.Initialize(viewGroup);
+        _descriptionAnchoredPosition = _descriptionText.rectTransform.anchoredPosition;
+    }
+
     public override void OnEnter(Dictionary<string, object> bundle)
     {
+        _descriptionText.rectTransform.anchoredPosition = _descriptionAnchoredPosition;
+
         var slideIn = new Slide(SlideMode.IN, Direction.DOWN)
             .AddTarget((RectTransform)_descriptionText.transform)
             .SetDuration(_transitionDuration)

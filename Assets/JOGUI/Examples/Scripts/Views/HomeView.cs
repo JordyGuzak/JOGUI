@@ -7,7 +7,13 @@ public class HomeView : View
     [SerializeField] private RectTransform _drawer;
     [SerializeField] private Blocker _blocker;
 
+    private Vector2 _drawerPosition;
     private bool _closing;
+
+    private void Awake()
+    {
+        _drawerPosition = _drawer.anchoredPosition;
+    }
 
     private void OnEnable()
     {
@@ -48,7 +54,10 @@ public class HomeView : View
 
     public void OpenDrawerMenu()
     {
+        _drawer.gameObject.SetActive(true);
         _blocker.gameObject.SetActive(true);
+
+        _drawer.anchoredPosition = _drawerPosition;
 
         var transition = new TransitionSet(TransitionMode.PARALLEL)
             .Add(new Slide(SlideMode.IN, Direction.RIGHT)
@@ -81,6 +90,7 @@ public class HomeView : View
             .SetOnComplete(() =>
             {
                 _blocker.gameObject.SetActive(false);
+                _drawer.gameObject.SetActive(false);
                 _closing = false;
             });
 

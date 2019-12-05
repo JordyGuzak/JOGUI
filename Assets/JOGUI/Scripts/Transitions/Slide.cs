@@ -13,6 +13,7 @@ namespace JOGUI
         private Direction _direction;
         private List<RectTransform> _targets = new List<RectTransform>();
 
+
         public Slide(SlideMode mode, Direction direction)
         {
             _mode = mode;
@@ -26,9 +27,9 @@ namespace JOGUI
             for (int i = 0; i < _targets.Count; i++)
             {
                 var rectTransform = _targets[i];
-                var offset = GetOffset();
-                var startValue = _mode == SlideMode.OUT ? Vector2.zero : offset;
-                var endValue = _mode == SlideMode.OUT ? offset : Vector2.zero;
+                var outOfScreenPosition = GetOutOfScreenAnchoredPosition(rectTransform, _direction);
+                var startValue = _mode == SlideMode.OUT ? rectTransform.anchoredPosition : outOfScreenPosition;
+                var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : rectTransform.anchoredPosition;
                 tweens.Add(new UITween<Vector2>(startValue, endValue)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
@@ -63,34 +64,6 @@ namespace JOGUI
             return this;
         }
 
-        private Vector2 GetOffset()
-        {
-            Vector2 direction = Vector2.zero;
-            float offset = 0;
-
-            switch(_direction)
-            {
-                case Direction.LEFT:
-                    direction = Vector2.left;
-                    offset = Screen.width;
-                    break;
-                case Direction.RIGHT:
-                    direction = Vector2.right;
-                    offset = Screen.width;
-                    break;
-                case Direction.UP:
-                    direction = Vector2.up;
-                    offset = Screen.height;
-                    break;
-                case Direction.DOWN:
-                    direction = Vector2.down;
-                    offset = Screen.height;
-                    break;
-            }
-
-            return direction * offset;
-        }
-
         private SlideMode GetOppositeSlideMode(SlideMode mode)
         {
             return mode == SlideMode.IN ? SlideMode.OUT : SlideMode.IN;
@@ -111,6 +84,33 @@ namespace JOGUI
                 default:
                     return Direction.LEFT;
             }
+        }
+
+        private Vector2 GetOutOfScreenAnchoredPosition(RectTransform rectTransform, Direction direction)
+        {
+            var camera = Camera.main;
+            var canvas = rectTransform.GetComponentInParent<Canvas>().rootCanvas;
+
+            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rectTransform.position);
+            Vector2 targetPos = Vector2.zero;
+
+            switch (direction)
+            {
+                case Direction.LEFT:
+                    targetPos = new Vector2(0 - rectTransform.rect.width * canvas.scaleFactor * rectTransform.pivot.x, screenPosition.y);
+                    break;
+                case Direction.RIGHT:
+                    targetPos = new Vector2(Screen.width + rectTransform.rect.width * canvas.scaleFactor * rectTransform.pivot.x, screenPosition.y);
+                    break;
+                case Direction.UP:
+                    targetPos = new Vector2(screenPosition.x, Screen.height + rectTransform.rect.height * canvas.scaleFactor * rectTransform.pivot.y);
+                    break;
+                case Direction.DOWN:
+                    targetPos = new Vector2(screenPosition.x, 0 - rectTransform.rect.height * canvas.scaleFactor * rectTransform.pivot.y);
+                    break;
+            }
+
+            return rectTransform.anchoredPosition + (targetPos - screenPosition);
         }
     }
 }

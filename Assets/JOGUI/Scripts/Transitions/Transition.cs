@@ -7,7 +7,7 @@ namespace JOGUI
         public float StartDelay { get; set; } = 0f;
         public float Duration { get; set; } = 0.5f;
         public float TotalDuration { get { return StartDelay + Duration; } }
-        public EaseType EaseType { get; set; } = EaseType.Linear;
+        public EaseType EaseType { get; set; } = EaseType.EaseInOutCubic;
 
         protected System.Action _onCompleteCallback;
 
