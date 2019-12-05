@@ -7,20 +7,7 @@ public class HomeView : View
     [SerializeField] private RectTransform _drawer;
     [SerializeField] private Blocker _blocker;
 
-    private Vector2 _drawerPosition;
-    private bool _closing;
-
     private Transition _drawerTransition;
-
-    private void OnEnable()
-    {
-        _blocker.onPointerClick.AddListener(CloseDrawerMenu);
-    }
-
-    private void OnDisable()
-    {
-        _blocker.onPointerClick.RemoveListener(CloseDrawerMenu);
-    }
 
     public override void Initialize(ViewGroup viewGroup)
     {
@@ -69,14 +56,18 @@ public class HomeView : View
         _drawer.gameObject.SetActive(true);
         _blocker.gameObject.SetActive(true);
 
-        _drawerTransition.Run();
+        _drawerTransition
+            .SetOnComplete(() =>
+            {
+                _blocker.onPointerClick.AddListener(CloseDrawerMenu);
+            })
+            .Run();
+
     }
 
     public void CloseDrawerMenu()
     {
-        if (_closing) return;
-
-        _closing = true;
+        _blocker.onPointerClick.RemoveListener(CloseDrawerMenu);
 
         _drawerTransition
             .Reversed()
@@ -84,7 +75,6 @@ public class HomeView : View
             {
                 _blocker.gameObject.SetActive(false);
                 _drawer.gameObject.SetActive(false);
-                _closing = false;
             })
             .Run();
     }
