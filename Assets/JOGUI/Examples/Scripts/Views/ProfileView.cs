@@ -30,12 +30,6 @@ public class ProfileView : View
 
     public override void OnExit()
     {
-        //var slideOut = new Slide(SlideMode.OUT, Direction.DOWN)
-        //    .AddTarget((RectTransform)_descriptionText.transform)
-        //    .SetDuration(_transitionDuration)
-        //    .SetEaseType(EaseType.EaseInOutCubic);
-
-        //slideOut.Run();
         _descriptionTransition.Reversed().Run();
     }
 

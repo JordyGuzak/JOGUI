@@ -78,24 +78,6 @@ public class HomeView : View
 
         _closing = true;
 
-        //var transition = new TransitionSet(TransitionMode.PARALLEL)
-        //    .Add(new Slide(_drawer.anchoredPosition, SlideMode.OUT, Direction.RIGHT)
-        //        .AddTarget(_drawer)
-        //        .SetDuration(_transitionDuration)
-        //        .SetEaseType(EaseType.EaseInOutCubic))
-        //    .Add(new Fade(0.66f, 0)
-        //        .AddTarget(_blocker)
-        //        .SetDuration(_transitionDuration)
-        //        .SetEaseType(EaseType.EaseInOutCubic))
-        //    .SetOnComplete(() =>
-        //    {
-        //        _blocker.gameObject.SetActive(false);
-        //        _drawer.gameObject.SetActive(false);
-        //        _closing = false;
-        //    });
-
-        //transition.Run();
-
         _drawerTransition
             .Reversed()
             .SetOnComplete(() =>
