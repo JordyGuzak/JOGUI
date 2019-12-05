@@ -2526,9 +2526,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1437753610}
   - component: {fileID: 1437753613}
-  - component: {fileID: 1437753612}
+  - component: {fileID: 1437753611}
   m_Layer: 5
-  m_Name: ViewGroup
+  m_Name: Main - ViewGroup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2555,7 +2555,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1437753612
+--- !u!114 &1437753611
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2564,7 +2564,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1437753609}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e5a38e1679176ca4eb42d2718259d6e2, type: 3}
+  m_Script: {fileID: 11500000, guid: bfcdcd8cc4153814badc868a6ba85ee6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!225 &1437753613

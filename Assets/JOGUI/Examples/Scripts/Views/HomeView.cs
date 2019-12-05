@@ -47,7 +47,7 @@ public class HomeView : View
                 .Add(fadeOut)
                 .Add(shared);
 
-            TransitionManager.Instance.StartTransition(this, profile, transitionSet);
+            ViewGroup.StartTransition(this, profile, transitionSet);
         }
     }
 

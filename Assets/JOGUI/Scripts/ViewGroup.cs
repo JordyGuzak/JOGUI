@@ -1,59 +1,68 @@
-﻿using JOGUI;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-public class ViewGroup : View
+namespace JOGUI
 {
-    private Dictionary<Type, View> _viewsDict = new Dictionary<Type, View>();
-
-    private View _activeView;
-
-    private void Awake()
+    public abstract class ViewGroup : View
     {
-        InitializeChildViews();
-    }
+        private Dictionary<Type, View> _viewsDict = new Dictionary<Type, View>();
 
-    private void InitializeChildViews()
-    {
-        bool first = true;
-
-        for (int i = 0; i < transform.childCount; i++)
+        private void Awake()
         {
-            var view = transform.GetChild(i).GetComponent<View>();
+            InitializeChildViews();
+        }
 
-            if (view && !_viewsDict.ContainsKey(view.GetType()))
+        private void InitializeChildViews()
+        {
+            bool first = true;
+
+            for (int i = 0; i < transform.childCount; i++)
             {
-                view.Initialize(this);
-                _viewsDict.Add(view.GetType(), view);
+                var view = transform.GetChild(i).GetComponent<View>();
 
-                view.gameObject.SetActive(first);
-
-                if (first)
+                if (view && !_viewsDict.ContainsKey(view.GetType()))
                 {
-                    _activeView = view;
-                    first = false;
+                    view.Initialize(this);
+                    _viewsDict.Add(view.GetType(), view);
+
+                    view.gameObject.SetActive(first);
+
+                    if (first)
+                    {
+                        first = false;
+                    }
                 }
             }
         }
-    }
 
-    public void SetActiveView(Type viewType, Transition transition)
-    {
-        if (TryGetView(viewType, out View view))
+        public void StartTransition(View source, View destination, Transition transition = null, Dictionary<string, object> bundle = null, bool placeOnTop = true) // TODO: create click blocker and destroy when transition completes
         {
-            TransitionManager.Instance.StartTransition(_activeView, view, transition);
-            _activeView = view;
-            //_activeView.transform.SetSiblingIndex(view.transform.parent.childCount - 1);
-        }
-        else
-        {
-            Debug.LogError($"Could not find view of type {viewType}");
-        }
-    }
+            if (transition == null)
+            {
+                transition = new Fade(0, 1).AddTarget(destination);
+            }
 
-    public bool TryGetView(Type viewType, out View view)
-    {
-        return _viewsDict.TryGetValue(viewType, out view);
+            source.OnExit();
+            destination.OnEnter(bundle ?? new Dictionary<string, object>());
+
+            destination.gameObject.SetActive(true);
+
+            if (placeOnTop)
+            {
+                destination.transform.SetAsLastSibling();
+            }
+
+            transition.SetOnComplete(() =>
+            {
+                source.gameObject.SetActive(false);
+            });
+
+            transition.Run();
+        }
+
+        public bool TryGetView(Type viewType, out View view)
+        {
+            return _viewsDict.TryGetValue(viewType, out view);
+        }
     }
 }
