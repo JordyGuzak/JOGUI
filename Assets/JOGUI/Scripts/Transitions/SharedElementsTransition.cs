@@ -3,22 +3,10 @@ using UnityEngine;
 
 namespace JOGUI
 {
-    public class SharedElementPair
-    {
-        public SharedElement Source { get; set; }
-        public SharedElement Destination { get; set; }
-    }
-
     public class SharedElementsTransition : Transition
     {
-        private Dictionary<string, SharedElement> _sourceElements;
-        private Dictionary<string, SharedElement> _destinationElements;
-
-        public SharedElementsTransition(Dictionary<string, SharedElement> sourceElements, Dictionary<string, SharedElement> destinationElements)
-        {
-            _sourceElements = sourceElements;
-            _destinationElements = destinationElements;
-        }
+        private Dictionary<string, SharedElement> _sourceElements = new Dictionary<string, SharedElement>();
+        private Dictionary<string, SharedElement> _destinationElements = new Dictionary<string, SharedElement>();
 
         public override ITween[] CreateAnimators()
         {
@@ -80,11 +68,25 @@ namespace JOGUI
 
         public override Transition Reversed()
         {
-            return new SharedElementsTransition(_destinationElements, _sourceElements)
+            return new SharedElementsTransition()
+                .SetSourceSharedElements(_destinationElements)
+                .SetDestinationSharedElements(_sourceElements)
                 .SetStartDelay(StartDelay)
                 .SetDuration(Duration)
                 .SetEaseType(EaseType)
                 .SetOnComplete(_onCompleteCallback);
+        }
+
+        public SharedElementsTransition SetSourceSharedElements(Dictionary<string, SharedElement> sourceElements)
+        {
+            _sourceElements = sourceElements ?? new Dictionary<string, SharedElement>();
+            return this;
+        }
+
+        public SharedElementsTransition SetDestinationSharedElements(Dictionary<string, SharedElement> destinationElements)
+        {
+            _destinationElements = destinationElements ?? new Dictionary<string, SharedElement>();
+            return this;
         }
 
         private Vector3 GetStartPosition(RectTransform sourceElement, RectTransform destinationElement)

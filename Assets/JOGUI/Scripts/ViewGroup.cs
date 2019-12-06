@@ -38,24 +38,25 @@ namespace JOGUI
             }
         }
 
-        public void Navigate(Type destinationViewType, Dictionary<string, object> bundle = null, bool placeOnTop = true)
+        public void Navigate(Type destinationViewType, Dictionary<string, object> bundle = null)
         {
             if (TryGetView(destinationViewType, out View destination))
             {
                 var source = _activeView;
+
+                destination.gameObject.SetActive(true);
+                destination.transform.SetAsLastSibling();
+
                 source.OnExit();
                 destination.OnEnter(bundle ?? new Dictionary<string, object>());
 
-                destination.gameObject.SetActive(true);
-
-                if (placeOnTop)
-                {
-                    destination.transform.SetAsLastSibling();
-                }
+                var destinationEnterTransition = destination.GetEnterTransition();
+                var sourceExitTransition = source.GetExitTransition();
+                InitializeSharedElementTransitions(destinationEnterTransition, source.SharedElements);
 
                 var transition = new TransitionSet(TransitionMode.PARALLEL)
-                    .Add(source.GetExitTransition())
-                    .Add(destination.GetEnterTransition())
+                    .Add(sourceExitTransition)
+                    .Add(destinationEnterTransition)
                     .SetOnComplete(() => source.gameObject.SetActive(false));
 
                 transition.Run();
@@ -70,15 +71,19 @@ namespace JOGUI
             var source = _activeView;
             var destination = _history.Pop();
 
-            source.OnExit();
-            destination.OnEnter(destination.Bundle ?? new Dictionary<string, object>());
-
             destination.gameObject.SetActive(true);
             destination.transform.SetAsLastSibling();
 
+            source.OnExit();
+            destination.OnEnter(destination.Bundle ?? new Dictionary<string, object>());
+
+            var destinationReEnterTransition = destination.GetExitTransition().Reversed();
+            var sourceReturnTransition = source.GetEnterTransition().Reversed();
+            InitializeSharedElementTransitions(destinationReEnterTransition, source.SharedElements);
+
             var transition = new TransitionSet(TransitionMode.PARALLEL)
-                .Add(source.GetEnterTransition().Reversed())
-                .Add(destination.GetExitTransition().Reversed())
+                .Add(sourceReturnTransition)
+                .Add(destinationReEnterTransition)
                 .SetOnComplete(() => source.gameObject.SetActive(false));
 
             transition.Run();
@@ -89,6 +94,21 @@ namespace JOGUI
         public bool TryGetView(Type viewType, out View view)
         {
             return _viewsDict.TryGetValue(viewType, out view);
+        }
+
+        private void InitializeSharedElementTransitions(Transition transition, Dictionary<string, SharedElement> sourceElements)
+        {
+            if (transition is SharedElementsTransition shared)
+            {
+                shared.SetSourceSharedElements(sourceElements);
+            }
+            else if (transition is TransitionSet set)
+            {
+                foreach (var t in set.Transitions)
+                {
+                    InitializeSharedElementTransitions(t, sourceElements);
+                }
+            }
         }
     }
 }

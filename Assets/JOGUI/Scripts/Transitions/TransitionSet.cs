@@ -7,8 +7,7 @@ namespace JOGUI
     public class TransitionSet : Transition // TODO: call oncomplete on when last transition completes
     {
         public TransitionMode Mode { get; private set; }
-
-        private List<Transition> _transitions = new List<Transition>();
+        public List<Transition> Transitions { get; private set; } = new List<Transition>();
 
         public TransitionSet()
         {
@@ -24,16 +23,16 @@ namespace JOGUI
         {
             if (transition != null)
             {
-                _transitions.Add(transition);
+                Transitions.Add(transition);
             }
             return this;
         }
 
         public TransitionSet Remove(Transition transition)
         {
-            if (_transitions.Contains(transition))
+            if (Transitions.Contains(transition))
             {
-                _transitions.Remove(transition);
+                Transitions.Remove(transition);
             }
             return this;
         }
@@ -45,28 +44,28 @@ namespace JOGUI
             switch (Mode)
             {
                 case TransitionMode.PARALLEL:
-                    foreach (var t in _transitions)
+                    foreach (var t in Transitions)
                     {
                         tweens.AddRange(t.CreateAnimators());
                     }
                     break;
                 case TransitionMode.SEQUENTIAL:
-                    if (_transitions.Count == 1)
+                    if (Transitions.Count == 1)
                     {
-                        tweens.AddRange(_transitions[0].CreateAnimators());
+                        tweens.AddRange(Transitions[0].CreateAnimators());
                     }
                     else
                     {
-                        for (int i = 1; i < _transitions.Count; i ++)
+                        for (int i = 1; i < Transitions.Count; i ++)
                         {
-                            _transitions[i].SetStartDelay(_transitions[i - 1].TotalDuration);
+                            Transitions[i].SetStartDelay(Transitions[i - 1].TotalDuration);
 
                             if (i == 1)
                             {
-                                tweens.AddRange(_transitions[i - 1].CreateAnimators());
+                                tweens.AddRange(Transitions[i - 1].CreateAnimators());
                             }
 
-                            tweens.AddRange(_transitions[i].CreateAnimators());
+                            tweens.AddRange(Transitions[i].CreateAnimators());
                         }
                     }
                     break;
@@ -79,9 +78,9 @@ namespace JOGUI
         {
             var reversed = new TransitionSet(Mode);
 
-            for (int i = _transitions.Count - 1; i >= 0; i--)
+            for (int i = Transitions.Count - 1; i >= 0; i--)
             {
-                reversed.Add(_transitions[i].Reversed());
+                reversed.Add(Transitions[i].Reversed());
             }
 
             return reversed

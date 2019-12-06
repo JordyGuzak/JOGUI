@@ -21,19 +21,15 @@ public class ProfileView : View
             .SetDuration(_transitionDuration)
             .SetEaseType(EaseType.EaseInOutCubic);
 
-        _enterTransition = new Slide(RectTransform.anchoredPosition, SlideMode.IN, Direction.RIGHT).AddTarget(RectTransform);
-        _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.LEFT).AddTarget(RectTransform);
-    }
+        _enterTransition = new TransitionSet()
+            .Add(new SharedElementsTransition()
+                .SetDestinationSharedElements(SharedElements)
+                .SetDuration(_transitionDuration))
+            .Add(new Fade(0, 1)
+                .AddTarget(this)
+                .SetDuration(_transitionDuration));
 
-    public override void OnEnter(Dictionary<string, object> bundle)
-    {
-        base.OnEnter(bundle);
-        //_descriptionTransition.Run();
-    }
-
-    public override void OnExit()
-    {
-        //_descriptionTransition.Reversed().Run();
+        _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.UP).AddTarget(RectTransform);
     }
 
     public override Transition GetEnterTransition()
@@ -46,7 +42,7 @@ public class ProfileView : View
         return _exitTransition;
     }
 
-    public void GoToHome()
+    public void GoBack()
     {
         //if (ViewGroup.TryGetView(typeof(HomeView), out View home))
         //{
@@ -71,8 +67,12 @@ public class ProfileView : View
 
         //    ViewGroup.StartTransition(this, home, transitionSet);
         //}
-        Debug.Log("Go Home");
         //ViewGroup.Navigate(typeof(HomeView));
         ViewGroup.Back();
+    }
+
+    public void GoToSettings()
+    {
+        ViewGroup.Navigate(typeof(SettingsView));
     }
 }

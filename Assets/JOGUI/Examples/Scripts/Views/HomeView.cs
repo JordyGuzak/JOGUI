@@ -26,7 +26,9 @@ public class HomeView : View
                 .SetEaseType(EaseType.EaseInOutCubic));
 
         _enterTransition = new Slide(RectTransform.anchoredPosition, SlideMode.IN, Direction.RIGHT).AddTarget(RectTransform);
-        _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.LEFT).AddTarget(RectTransform);
+        _exitTransition = new Fade(1, 0)
+            .AddTarget(this)
+            .SetDuration(_transitionDuration); //new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.LEFT).AddTarget(RectTransform);
     }
 
     public override Transition GetEnterTransition()
@@ -64,7 +66,6 @@ public class HomeView : View
 
         //    ViewGroup.StartTransition(this, profile, transitionSet);
         //}
-        Debug.Log("Go Profile");
         ViewGroup.Navigate(typeof(ProfileView));
     }
 
@@ -79,7 +80,6 @@ public class HomeView : View
                 _blocker.onPointerClick.AddListener(CloseDrawerMenu);
             })
             .Run();
-
     }
 
     public void CloseDrawerMenu()
