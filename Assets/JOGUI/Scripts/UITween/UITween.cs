@@ -21,6 +21,7 @@ namespace JOGUI
         void Pause();
         void Stop();
         ITween Run();
+        ITween SetFirstFrame();
         bool IsPlaying();
         bool IsLooping();
     }
@@ -55,7 +56,7 @@ namespace JOGUI
         }
 
         /// <summary>
-        /// 
+        /// The time in seconds before the animated value reaches the end value. The start delay is not included.
         /// </summary>
         public float Duration
         {
@@ -130,6 +131,7 @@ namespace JOGUI
 
             _onStartCallback?.Invoke();
             _play = true;
+            SetFirstFrame();
         }
 
         public ITween Run()
@@ -142,6 +144,7 @@ namespace JOGUI
         {
             _elapsedTime = 0f;
             _play = true;
+            SetFirstFrame();
         }
 
         public void Pause()
@@ -252,6 +255,15 @@ namespace JOGUI
                 return (IEvaluateType<T>)new Vector3Evaluator();
             else
                 throw new System.ArgumentException($"Unsupported type [{type.Name}].");
+        }
+
+        public ITween SetFirstFrame()
+        {
+            if (_evaluator == null || _options == null) return this;
+
+            T startValue = _evaluator.Evaluate(_options.EaseType, _startValue, _endValue, 0f);
+            _onUpdateCallback?.Invoke(startValue);
+            return this;
         }
     }
 }

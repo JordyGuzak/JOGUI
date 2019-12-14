@@ -3,16 +3,16 @@ using UnityEngine;
 
 namespace JOGUI
 {
-    public class Fade : Transition
+    public class Size : Transition
     {
-        private float _startAlpha;
-        private float _endAlpha;
-        private List<IFadeTarget> _targets = new List<IFadeTarget>();
+        private Vector2 _startSize;
+        private Vector2 _endSize;
+        private List<RectTransform> _targets = new List<RectTransform>();
 
-        public Fade(float startAlpha, float endAlpha)
+        public Size(Vector2 startSize, Vector2 endSize)
         {
-            _startAlpha = Mathf.Clamp01(startAlpha);
-            _endAlpha = Mathf.Clamp01(endAlpha);
+            _startSize = startSize;
+            _endSize = endSize;
         }
 
         protected override ITween[] CreateAnimators()
@@ -21,11 +21,12 @@ namespace JOGUI
 
             for (int i = 0; i < _targets.Count; i++)
             {
-                tweens[i] = new UITween<float>(_startAlpha, _endAlpha)
+                var target = _targets[i];
+                tweens[i] = new UITween<Vector2>(_startSize, _endSize)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(_targets[i].SetAlpha);
+                    .SetOnUpdate(value => target.sizeDelta = value);
             }
 
             return tweens;
@@ -33,9 +34,9 @@ namespace JOGUI
 
         public override Transition Reversed()
         {
-            var reversed = new Fade(_endAlpha, _startAlpha);
+            var reversed = new Size(_endSize, _startSize);
 
-            foreach (var target in _targets)
+            foreach(var target in _targets)
             {
                 reversed.AddTarget(target);
             }
@@ -46,7 +47,7 @@ namespace JOGUI
                 .SetOnComplete(_onCompleteCallback);
         }
 
-        public Fade AddTarget(IFadeTarget target)
+        public Size AddTarget(RectTransform target)
         {
             if (target == null || _targets.Contains(target))
                 return this;
@@ -54,5 +55,6 @@ namespace JOGUI
             _targets.Add(target);
             return this;
         }
+
     }
 }

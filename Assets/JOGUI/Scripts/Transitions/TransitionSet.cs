@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace JOGUI
 {
     public enum TransitionMode { PARALLEL, SEQUENTIAL }
 
-    public class TransitionSet : Transition // TODO: call oncomplete on when last transition completes
+    public class TransitionSet : Transition
     {
+        public override float Duration => Mode == TransitionMode.PARALLEL ? Transitions.Max(t => t.Duration) : Transitions.Sum(t => t.Duration);
         public TransitionMode Mode { get; private set; }
         public List<Transition> Transitions { get; private set; } = new List<Transition>();
 
@@ -37,7 +39,7 @@ namespace JOGUI
             return this;
         }
 
-        public override ITween[] CreateAnimators()
+        protected override ITween[] CreateAnimators()
         {
             var tweens = new List<ITween>();
 
@@ -46,28 +48,33 @@ namespace JOGUI
                 case TransitionMode.PARALLEL:
                     foreach (var t in Transitions)
                     {
-                        tweens.AddRange(t.CreateAnimators());
+                        t.SetStartDelay(t.StartDelay + StartDelay);
+                        tweens.AddRange(t.CreateAnimatorsAndSetupCompleteListener());
+                        t.SetStartDelay(t.StartDelay - StartDelay);
                     }
                     break;
                 case TransitionMode.SEQUENTIAL:
-                    if (Transitions.Count == 1)
-                    {
-                        tweens.AddRange(Transitions[0].CreateAnimators());
-                    }
-                    else
-                    {
-                        for (int i = 1; i < Transitions.Count; i ++)
-                        {
-                            Transitions[i].SetStartDelay(Transitions[i - 1].TotalDuration);
+                    var startDelays = new float[Transitions.Count];
 
-                            if (i == 1)
-                            {
-                                tweens.AddRange(Transitions[i - 1].CreateAnimators());
-                            }
-
-                            tweens.AddRange(Transitions[i].CreateAnimators());
-                        }
+                    if (Transitions.Count > 0)
+                    {
+                        startDelays[0] = Transitions[0].StartDelay;
+                        Transitions[0].SetStartDelay(Transitions[0].StartDelay + StartDelay);
+                        tweens.AddRange(Transitions[0].CreateAnimatorsAndSetupCompleteListener());
                     }
+
+                    for (int i = 1; i < Transitions.Count; i++)
+                    {
+                        startDelays[i] = Transitions[i].StartDelay;
+                        Transitions[i].SetStartDelay(Transitions[i].StartDelay + Transitions[i - 1].TotalDuration);
+                        tweens.AddRange(Transitions[i].CreateAnimatorsAndSetupCompleteListener());
+                    }
+
+                    for(int i = 0; i < startDelays.Length; i++)
+                    {
+                        Transitions[i].SetStartDelay(startDelays[i]);
+                    }
+
                     break;
             }
 

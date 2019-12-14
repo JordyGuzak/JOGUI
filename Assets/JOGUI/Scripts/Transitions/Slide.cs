@@ -1,11 +1,10 @@
-﻿ 
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace JOGUI
 {
     public enum SlideMode { IN, OUT }
-    public enum Direction { LEFT, RIGHT, UP, DOWN}
+    public enum Direction { LEFT, RIGHT, UP, DOWN }
 
     public class Slide : Transition
     {
@@ -21,7 +20,7 @@ namespace JOGUI
             _direction = direction;
         }
 
-        public override ITween[] CreateAnimators()
+        protected override ITween[] CreateAnimators()
         {
             var tweens = new List<ITween>();
 
@@ -90,7 +89,7 @@ namespace JOGUI
                     targetPos = new Vector2(screenPosition.x, Screen.height + rectTransform.rect.height * canvas.scaleFactor * rectTransform.pivot.y);
                     break;
                 case Direction.DOWN:
-                    targetPos = new Vector2(screenPosition.x, 0 - rectTransform.rect.height * canvas.scaleFactor * rectTransform.pivot.y);
+                    targetPos = new Vector2(screenPosition.x, -rectTransform.rect.height * canvas.scaleFactor + rectTransform.rect.height * canvas.scaleFactor * rectTransform.pivot.y);
                     break;
             }
 

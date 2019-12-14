@@ -1,78 +1,55 @@
-﻿using JOGUI;
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
-using System.Collections.Generic;
 
-public class ProfileView : View
+namespace JOGUI.Examples
 {
-    [SerializeField] private float _transitionDuration = 1f;
-    [SerializeField] private TMP_Text _descriptionText;
-
-    private Transition _enterTransition;
-    private Transition _exitTransition;
-    private Transition _descriptionTransition;
-
-    public override void Initialize(ViewGroup viewGroup)
+    public class ProfileView : View
     {
-        base.Initialize(viewGroup);
+        [SerializeField] private float _transitionDuration = 1f;
+        [SerializeField] private TMP_Text _descriptionText;
 
-        _descriptionTransition = new Slide(_descriptionText.rectTransform.anchoredPosition, SlideMode.IN, Direction.DOWN)
-            .AddTarget((RectTransform)_descriptionText.transform)
-            .SetDuration(_transitionDuration)
-            .SetEaseType(EaseType.EaseInOutCubic);
+        private Transition _enterTransition;
+        private Transition _exitTransition;
+        private Transition _descriptionTransition;
 
-        _enterTransition = new TransitionSet()
-            .Add(new SharedElementsTransition()
-                .SetDestinationSharedElements(SharedElements)
-                .SetDuration(_transitionDuration))
-            .Add(new Fade(0, 1)
-                .AddTarget(this)
-                .SetDuration(_transitionDuration));
+        public override void Initialize(ViewGroup viewGroup)
+        {
+            base.Initialize(viewGroup);
 
-        _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.UP).AddTarget(RectTransform);
-    }
+            _descriptionTransition = new Slide(_descriptionText.rectTransform.anchoredPosition, SlideMode.IN, Direction.DOWN)
+                .AddTarget((RectTransform)_descriptionText.transform)
+                .SetDuration(_transitionDuration)
+                .SetEaseType(EaseType.EaseInOutCubic);
 
-    public override Transition GetEnterTransition()
-    {
-        return _enterTransition;
-    }
+            _enterTransition = new TransitionSet()
+                .Add(new SharedElementsTransition()
+                    .SetDestinationSharedElements(SharedElements)
+                    .SetDuration(_transitionDuration))
+                .Add(new Fade(0, 1)
+                    .AddTarget(this)
+                    .SetDuration(_transitionDuration));
 
-    public override Transition GetExitTransition()
-    {
-        return _exitTransition;
-    }
+            _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.UP).AddTarget(RectTransform);
+        }
 
-    public void GoBack()
-    {
-        //if (ViewGroup.TryGetView(typeof(HomeView), out View home))
-        //{
-        //    var shared = new SharedElementsTransition(SharedElements, home.SharedElements)
-        //        .SetDuration(_transitionDuration)
-        //        .SetEaseType(EaseType.EaseInOutCubic);
+        public override Transition GetEnterTransition()
+        {
+            return _enterTransition;
+        }
 
-        //    var fadeIn = new Fade(0, 1)
-        //        .AddTarget(home)
-        //        .SetDuration(_transitionDuration)
-        //        .SetEaseType(EaseType.EaseInOutCubic);
+        public override Transition GetExitTransition()
+        {
+            return _exitTransition;
+        }
 
-        //    var fadeOut = new Fade(1, 0)
-        //        .AddTarget(this)
-        //        .SetDuration(_transitionDuration)
-        //        .SetEaseType(EaseType.EaseInOutCubic);
+        public void GoBack()
+        {
+            ViewGroup.Back();
+        }
 
-        //    var transitionSet = new TransitionSet(TransitionMode.PARALLEL)
-        //        .Add(fadeIn)
-        //        .Add(fadeOut)
-        //        .Add(shared);
-
-        //    ViewGroup.StartTransition(this, home, transitionSet);
-        //}
-        //ViewGroup.Navigate(typeof(HomeView));
-        ViewGroup.Back();
-    }
-
-    public void GoToSettings()
-    {
-        ViewGroup.Navigate(typeof(SettingsView));
+        public void GoToSettings()
+        {
+            ViewGroup.Navigate(typeof(SettingsView));
+        }
     }
 }

@@ -1,31 +1,33 @@
-﻿using JOGUI;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class SettingsView : View
+namespace JOGUI.Examples
 {
-    private Transition _enterTransition;
-    private Transition _exitTransition;
-
-    public override void Initialize(ViewGroup viewGroup)
+    public class SettingsView : View
     {
-        base.Initialize(viewGroup);
+        private Transition _enterTransition;
+        private Transition _exitTransition;
 
-        _enterTransition = new Slide(RectTransform.anchoredPosition, SlideMode.IN, Direction.DOWN).AddTarget(RectTransform);
-        _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.UP).AddTarget(RectTransform);
-    }
+        public override void Initialize(ViewGroup viewGroup)
+        {
+            base.Initialize(viewGroup);
 
-    public override Transition GetEnterTransition()
-    {
-        return _enterTransition;
-    }
+            _enterTransition = new Slide(RectTransform.anchoredPosition, SlideMode.IN, Direction.DOWN).AddTarget(RectTransform);
+            _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.UP).AddTarget(RectTransform);
+        }
 
-    public override Transition GetExitTransition()
-    {
-        return _exitTransition;
-    }
+        public override Transition GetEnterTransition()
+        {
+            return _enterTransition;
+        }
 
-    public void GoBack()
-    {
-        ViewGroup.Back();
+        public override Transition GetExitTransition()
+        {
+            return _exitTransition;
+        }
+
+        public void GoBack()
+        {
+            ViewGroup.Back();
+        }
     }
 }

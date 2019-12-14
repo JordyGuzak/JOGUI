@@ -4,7 +4,7 @@ using UnityEngine;
 namespace JOGUI
 {
     [RequireComponent(typeof(CanvasGroup))]
-    public abstract class View : MonoBehaviour, IFadeTarget, ISlideTarget, IScaleTarget, ISizeTarget // Add enter, exit, return and re-enter transitions?
+    public abstract class View : MonoBehaviour, IFadeTarget, ISlideTarget, IScaleTarget, ISizeTarget
     {
         private RectTransform _rectTransform;
         public RectTransform RectTransform
@@ -35,7 +35,7 @@ namespace JOGUI
         }
 
         /// <summary>
-        /// Lifecycle method that gets called by the TransitionManager when this View enters the screen.
+        /// Lifecycle method that gets called by the ViewGroup when this View enters the screen.
         /// </summary>
         /// <param name="data"></param>
         public virtual void OnEnter(Dictionary<string, object> bundle)
@@ -44,7 +44,7 @@ namespace JOGUI
         }
 
         /// <summary>
-        /// Lifecycle method that gets called by the TransitionManager when this View exits the screen.
+        /// Lifecycle method that gets called by the ViewGroup when this View exits the screen.
         /// </summary>
         public virtual void OnExit()
         {
@@ -56,9 +56,7 @@ namespace JOGUI
         /// <returns></returns>
         public virtual Transition GetEnterTransition()
         {
-            return new Fade(0, 1)
-                .AddTarget(this)
-                .SetDuration(0.75f);
+            return null;
         }
 
         /// <summary>
@@ -67,9 +65,27 @@ namespace JOGUI
         /// <returns></returns>
         public virtual Transition GetExitTransition()
         {
-            return new Fade(1, 0)
-                .AddTarget(this)
-                .SetDuration(0.75f);
+            return null;
+        }
+
+        /// <summary>
+        /// The transition that is run when the View re-enters the screen.
+        /// By default this plays the exit transition in reverse.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Transition GetReEnterTransition()
+        {
+            return GetExitTransition()?.Reversed();
+        }
+
+        /// <summary>
+        /// The transition that is run when returning to an exitted View.
+        /// By default this plays the enter transition in reverse.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Transition GetReturnTransition()
+        {
+            return GetEnterTransition()?.Reversed();
         }
 
         /// <summary>

@@ -3,35 +3,33 @@ using UnityEngine;
 
 namespace JOGUI
 {
+    public class SharedElementPair
+    {
+        public SharedElement Source { get; set; }
+        public SharedElement Destination { get; set; }
+    }
+
     public class SharedElementsTransition : Transition
     {
         private Dictionary<string, SharedElement> _sourceElements = new Dictionary<string, SharedElement>();
         private Dictionary<string, SharedElement> _destinationElements = new Dictionary<string, SharedElement>();
+        private List<SharedElementPair> _pairs = new List<SharedElementPair>();
 
-        public override ITween[] CreateAnimators()
+        protected override ITween[] CreateAnimators()
         {
             var tweens = new List<ITween>();
+            _pairs = new List<SharedElementPair>();
 
             foreach (var pair in _destinationElements)
             {
                 if (_sourceElements.TryGetValue(pair.Key, out SharedElement sourceElement))
                 {
                     var destinationElement = pair.Value;
-                    bool tweenAdded = false;
-
-                    void onStart()
+                    _pairs.Add(new SharedElementPair()
                     {
-                        sourceElement.gameObject.SetActive(false);
-                        destinationElement.CanvasGroup.ignoreParentGroups = true;
-                        tweenAdded = true;
-                    }
-
-                    void onComplete()
-                    {
-                        sourceElement.gameObject.SetActive(true);
-                        destinationElement.CanvasGroup.ignoreParentGroups = false;
-                        _onCompleteCallback?.Invoke();
-                    }
+                        Source = sourceElement,
+                        Destination = destinationElement
+                    });
 
                     if (destinationElement.RectTransform.position != sourceElement.RectTransform.position)
                     {
@@ -41,9 +39,7 @@ namespace JOGUI
                             .SetDelay(StartDelay)
                             .SetDuration(Duration)
                             .SetEase(EaseType)
-                            .SetOnStart(onStart)
-                            .SetOnUpdate(value => destinationElement.RectTransform.position = value)
-                            .SetOnComplete(onComplete));
+                            .SetOnUpdate(value => destinationElement.RectTransform.position = value));
                     }
 
                     if (destinationElement.RectTransform.rect.size != sourceElement.RectTransform.rect.size)
@@ -52,13 +48,11 @@ namespace JOGUI
                             .SetDelay(StartDelay)
                             .SetDuration(Duration)
                             .SetEase(EaseType)
-                            .SetOnStart(tweenAdded ? null : (System.Action)onStart)
                             .SetOnUpdate(value =>
                             {
                                 destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, value.x);
                                 destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, value.y);
-                            })
-                            .SetOnComplete(tweenAdded ? null : (System.Action)onComplete));
+                            }));
                     }
                 }
             }
@@ -87,6 +81,28 @@ namespace JOGUI
         {
             _destinationElements = destinationElements ?? new Dictionary<string, SharedElement>();
             return this;
+        }
+
+        public override void OnTransitionStart()
+        {
+            base.OnTransitionStart();
+
+            foreach (var pair in _pairs)
+            {
+                pair.Source.gameObject.SetActive(false);
+                pair.Destination.CanvasGroup.ignoreParentGroups = true;
+            }
+        }
+
+        public override void OnTransitionComplete()
+        {
+            base.OnTransitionComplete();
+
+            foreach (var pair in _pairs)
+            {
+                pair.Source.gameObject.SetActive(true);
+                pair.Destination.CanvasGroup.ignoreParentGroups = false;
+            }
         }
 
         private Vector3 GetStartPosition(RectTransform sourceElement, RectTransform destinationElement)
