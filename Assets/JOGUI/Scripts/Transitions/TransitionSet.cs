@@ -9,92 +9,109 @@ namespace JOGUI
     {
         public override float Duration => Mode == TransitionMode.PARALLEL ? Transitions.Max(t => t.Duration) : Transitions.Sum(t => t.Duration);
         public TransitionMode Mode { get; private set; }
-        public List<Transition> Transitions { get; private set; } = new List<Transition>();
+        public readonly LinkedList<Transition> Transitions;
+        private LinkedListNode<Transition> _currentNode;
 
-        public TransitionSet()
-        {
-            Mode = TransitionMode.PARALLEL;
-        }
-
-        public TransitionSet(TransitionMode mode)
+        public TransitionSet(TransitionMode mode = TransitionMode.PARALLEL)
         {
             Mode = mode;
+            Transitions = new LinkedList<Transition>();
         }
 
         public TransitionSet Add(Transition transition)
         {
-            if (transition != null)
-            {
-                Transitions.Add(transition);
-            }
+            if (transition == null) return this;
+            transition.Parent = this;
+            Transitions.AddLast(transition);
             return this;
         }
 
         public TransitionSet Remove(Transition transition)
         {
-            if (Transitions.Contains(transition))
-            {
-                Transitions.Remove(transition);
-            }
+            if (!Transitions.Contains(transition)) return this;
+            transition.Parent = null;
+            Transitions.Remove(transition);
             return this;
         }
 
         protected override ITween[] CreateAnimators()
         {
-            var tweens = new List<ITween>();
-
-            switch (Mode)
-            {
-                case TransitionMode.PARALLEL:
-                    foreach (var t in Transitions)
-                    {
-                        t.SetStartDelay(t.StartDelay + StartDelay);
-                        tweens.AddRange(t.CreateAnimatorsAndSetupCompleteListener());
-                        t.SetStartDelay(t.StartDelay - StartDelay);
-                    }
-                    break;
-                case TransitionMode.SEQUENTIAL:
-                    var startDelays = new float[Transitions.Count];
-
-                    if (Transitions.Count > 0)
-                    {
-                        startDelays[0] = Transitions[0].StartDelay;
-                        Transitions[0].SetStartDelay(Transitions[0].StartDelay + StartDelay);
-                        tweens.AddRange(Transitions[0].CreateAnimatorsAndSetupCompleteListener());
-                    }
-
-                    for (int i = 1; i < Transitions.Count; i++)
-                    {
-                        startDelays[i] = Transitions[i].StartDelay;
-                        Transitions[i].SetStartDelay(Transitions[i].StartDelay + Transitions[i - 1].TotalDuration);
-                        tweens.AddRange(Transitions[i].CreateAnimatorsAndSetupCompleteListener());
-                    }
-
-                    for(int i = 0; i < startDelays.Length; i++)
-                    {
-                        Transitions[i].SetStartDelay(startDelays[i]);
-                    }
-
-                    break;
-            }
-
-            return tweens.ToArray();
+            return new ITween[0];
         }
 
         public override Transition Reversed()
         {
             var reversed = new TransitionSet(Mode);
+            var node = Transitions.Last;
 
-            for (int i = Transitions.Count - 1; i >= 0; i--)
+            while (node != null)
             {
-                reversed.Add(Transitions[i].Reversed());
+                reversed.Add(node.Value.Reversed());
+                node = node.Previous;
             }
 
             return reversed
                 .SetStartDelay(StartDelay)
                 .SetDuration(Duration)
                 .SetEaseType(EaseType)
+                .SetOnStart(_onStartCallback)
                 .SetOnComplete(_onCompleteCallback);
+        }
+
+        public override void Run()
+        {
+            OnTransitionStart();
+
+            if (Transitions.Count == 0)
+            {
+                OnTransitionComplete();
+                return;
+            }
+            
+            switch (Mode)
+            {
+                case TransitionMode.PARALLEL:
+                    var longest = Transitions.OrderByDescending(t => t.TotalDuration).FirstOrDefault();
+                    if (longest != null)
+                    {
+                        longest.TransitionComplete += OnLongestTransitionComplete;
+                    }
+                    
+                    foreach (var transition in Transitions)
+                    {
+                        transition.Run();
+                    }
+                    break;
+                case TransitionMode.SEQUENTIAL:
+                    Run(Transitions.First);
+                    break;
+            }
+        }
+
+        private void Run(LinkedListNode<Transition> node)
+        {
+            if (node == null)
+            {
+                OnTransitionComplete();
+                return;
+            }
+
+            _currentNode = node;
+            var transition = node.Value;
+            transition.TransitionComplete += OnChildTransitionComplete;
+            transition.Run();
+        }
+
+        private void OnChildTransitionComplete(Transition transition)
+        {
+            transition.TransitionComplete -= OnChildTransitionComplete;
+            Run(_currentNode.Next);
+        }
+
+        private void OnLongestTransitionComplete(Transition transition)
+        {
+            transition.TransitionComplete -= OnLongestTransitionComplete;
+            OnTransitionComplete();
         }
     }
 }

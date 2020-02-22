@@ -11,8 +11,8 @@ namespace JOGUI.Examples
         {
             base.Initialize(viewGroup);
 
-            _enterTransition = new Slide(RectTransform.anchoredPosition, SlideMode.IN, Direction.DOWN).AddTarget(RectTransform);
-            _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.UP).AddTarget(RectTransform);
+            _enterTransition = new Slide(RectTransform.position, SlideMode.IN, Direction.DOWN).AddTarget(RectTransform);
+            _exitTransition = new Slide(RectTransform.position, SlideMode.OUT, Direction.LEFT).AddTarget(RectTransform);
         }
 
         public override Transition GetEnterTransition()
@@ -25,9 +25,16 @@ namespace JOGUI.Examples
             return _exitTransition;
         }
 
-        public void GoBack()
+        public override Transition GetReEnterTransition()
         {
-            ViewGroup.Back();
+            return new TransitionSet(TransitionMode.PARALLEL)
+                .Add(new Slide(RectTransform.position, SlideMode.IN, Direction.LEFT).AddTarget(RectTransform))
+                .Add(new Fade(0, 1).AddTarget(this));
+        }
+
+        public void GoToItemsList()
+        {
+            ViewGroup.Navigate(typeof(ItemsView));
         }
     }
 }

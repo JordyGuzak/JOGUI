@@ -59,6 +59,24 @@ public static class Ease
                 return EaseOutCubic(startValue, endValue, t);
             case EaseType.EaseInOutCubic:
                 return EaseInOutCubic(startValue, endValue, t);
+            case EaseType.EaseInBounce:
+                return EaseInBounce(startValue, endValue, t);
+            case EaseType.EaseOutBounce:
+                return EaseOutBounce(startValue, endValue, t);
+            case EaseType.EaseInElastic:
+                return EaseInElastic(startValue, endValue, t);
+            case EaseType.EaseOutElastic:
+                return EaseOutElastic(startValue, endValue, t);
+            case EaseType.EaseInOutElastic:
+                return EaseInOutElastic(startValue, endValue, t);
+            case EaseType.EaseInOutBounce:
+                return EaseInOutBounce(startValue, endValue, t);
+            case EaseType.EaseInBack:
+                return EaseInBack(startValue, endValue, t);
+            case EaseType.EaseOutBack:
+                return EaseOutBack(startValue, endValue, t);
+            case EaseType.EaseInOutBack:
+                return EaseInOutBack(startValue, endValue, t);
             default:
                 return Linear(startValue, endValue, t);
         }

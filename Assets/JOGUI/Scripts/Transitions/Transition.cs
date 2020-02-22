@@ -1,15 +1,23 @@
 ﻿using System.Linq;
+using System.Web;
 using UnityEngine;
 
 namespace JOGUI
 {
     public abstract class Transition
     {
+        public delegate void TransitionCompleteHandler(Transition transition);
+        public event TransitionCompleteHandler TransitionComplete;
+
+        public Transition Parent { get; set; }
         public float StartDelay { get; protected set; } = 0f;
         public virtual float Duration { get; protected set; } = 0.5f;
         public float TotalDuration { get { return StartDelay + Duration; } }
         public EaseType EaseType { get; protected set; } = EaseType.EaseInOutCubic;
+        public bool IsRunning { get; protected set; }
 
+        protected ITween[] _tweens;
+        protected System.Action _onStartCallback;
         protected System.Action _onCompleteCallback;
 
         public Transition SetStartDelay(float startDelay)
@@ -30,6 +38,12 @@ namespace JOGUI
             return this;
         }
 
+        public Transition SetOnStart(System.Action onStart)
+        {
+            _onStartCallback = onStart;
+            return this;
+        }
+
         public Transition SetOnComplete(System.Action onComplete)
         {
             _onCompleteCallback = onComplete;
@@ -39,18 +53,38 @@ namespace JOGUI
         protected abstract ITween[] CreateAnimators();
         public abstract Transition Reversed();
 
-        public void Run()
+        public virtual void Run()
         {
+            IsRunning = true;
             var tweens = CreateAnimatorsAndSetupCompleteListener();  
             UITweenRunner.Instance.Play(tweens);
         }
-
-        public ITween[] CreateAnimatorsAndSetupCompleteListener()
+        
+        public void Cancel()
         {
-            var tweens = CreateAnimators();
+            if (_tweens == null) return;
+
+            foreach (var t in _tweens)
+            {
+                t.Stop();
+            }
+        }
+
+        protected virtual ITween[] CreateAnimatorsAndSetupCompleteListener()
+        {
+            _tweens = CreateAnimators();
             OnTransitionStart();
 
-            var longest = tweens.OrderByDescending(t => t.TotalDuration).FirstOrDefault();
+            ITween longest = null;
+            foreach (var tween in _tweens)
+            {
+                if (longest == null || tween.TotalDuration > longest.TotalDuration)
+                    longest = tween;
+
+                if (Parent == null) continue;
+                tween.StartDelay += Parent.StartDelay;
+            }
+            
             if (longest != null)
             {
                 longest.OnAnimationFinished += OnLastAnimationFinished;
@@ -60,19 +94,22 @@ namespace JOGUI
                 OnTransitionComplete();
             }
 
-            return tweens;
+            return _tweens;
         }
 
-        public virtual void OnTransitionStart()
-        { 
-        }
-
-        public virtual void OnTransitionComplete()
+        protected virtual void OnTransitionStart()
         {
-            _onCompleteCallback?.Invoke();
+            _onStartCallback?.Invoke();
         }
 
-        protected void OnLastAnimationFinished(ITween tween)
+        protected virtual void OnTransitionComplete()
+        {
+            IsRunning = false;
+            _onCompleteCallback?.Invoke();
+            TransitionComplete?.Invoke(this);
+        }
+
+        private void OnLastAnimationFinished(ITween tween)
         {
             tween.OnAnimationFinished -= OnLastAnimationFinished;
             OnTransitionComplete();

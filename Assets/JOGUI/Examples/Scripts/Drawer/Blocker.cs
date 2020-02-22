@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.Events;
 
-namespace JOGUI
+namespace JOGUI.Examples
 {
     public class Blocker : MonoBehaviour, IPointerClickHandler, IFadeTarget
     {

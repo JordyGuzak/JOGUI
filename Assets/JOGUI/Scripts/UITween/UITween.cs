@@ -157,6 +157,8 @@ namespace JOGUI
 
         public void Stop()
         {
+            if (!_play) return;
+
             _elapsedTime = 0f;
             _play = false;
             OnAnimationFinished?.Invoke(this);
@@ -253,6 +255,8 @@ namespace JOGUI
                 return (IEvaluateType<T>)new Vector2Evaluator();
             else if (type == typeof(Vector3))
                 return (IEvaluateType<T>)new Vector3Evaluator();
+            else if (type == typeof(Color))
+                return (IEvaluateType<T>)new ColorEvaluator();
             else
                 throw new System.ArgumentException($"Unsupported type [{type.Name}].");
         }

@@ -44,6 +44,7 @@ namespace JOGUI
             return reversed.SetStartDelay(StartDelay)
                 .SetDuration(Duration)
                 .SetEaseType(EaseType)
+                .SetOnStart(_onStartCallback)
                 .SetOnComplete(_onCompleteCallback);
         }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace JOGUI
@@ -10,12 +11,12 @@ namespace JOGUI
     {
         private SlideMode _mode;
         private Direction _direction;
-        private Vector2 _anchoredPosition;
+        private Vector3 _referenceWorldPosition;
         private List<RectTransform> _targets = new List<RectTransform>();
 
-        public Slide(Vector2 anchoredPosition, SlideMode mode, Direction direction)
+        public Slide(Vector3 referenceWorldPosition, SlideMode mode, Direction direction)
         {
-            _anchoredPosition = anchoredPosition;
+            _referenceWorldPosition = referenceWorldPosition;
             _mode = mode;
             _direction = direction;
         }
@@ -24,17 +25,17 @@ namespace JOGUI
         {
             var tweens = new List<ITween>();
 
-            for (int i = 0; i < _targets.Count; i++)
+            foreach (var rectTransform in _targets)
             {
-                var rectTransform = _targets[i];
-                var outOfScreenPosition = GetOutOfScreenAnchoredPosition(rectTransform, _direction);
-                var startValue = _mode == SlideMode.OUT ? _anchoredPosition : outOfScreenPosition;
-                var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : _anchoredPosition;
-                tweens.Add(new UITween<Vector2>(startValue, endValue)
+                var outOfScreenPosition = GetOutOfScreenWorldPosition(rectTransform, _direction);//GetOutOfScreenAnchoredPosition(rectTransform, _direction);
+                var startValue = _mode == SlideMode.OUT ? _referenceWorldPosition : outOfScreenPosition;//_anchoredPosition : outOfScreenPosition;
+                var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : _referenceWorldPosition;//outOfScreenPosition : _anchoredPosition;
+                var transform = rectTransform;
+                tweens.Add(new UITween<Vector3>(startValue, endValue)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(value => rectTransform.anchoredPosition = value));
+                    .SetOnUpdate(pos => transform.position = pos));
             }
 
             return tweens.ToArray();
@@ -42,7 +43,7 @@ namespace JOGUI
 
         public override Transition Reversed()
         {
-            var reversed = new Slide(_anchoredPosition, GetOppositeSlideMode(_mode), _direction);
+            var reversed = new Slide(_referenceWorldPosition, GetOppositeSlideMode(_mode), _direction);
 
             foreach (var target in _targets)
             {
@@ -52,6 +53,7 @@ namespace JOGUI
             return reversed.SetStartDelay(StartDelay)
                 .SetDuration(Duration)
                 .SetEaseType(EaseType)
+                .SetOnStart(_onStartCallback)
                 .SetOnComplete(_onCompleteCallback);
         }
 
@@ -68,15 +70,45 @@ namespace JOGUI
         {
             return mode == SlideMode.IN ? SlideMode.OUT : SlideMode.IN;
         }
+        
+        private Vector3 GetOutOfScreenWorldPosition(RectTransform rectTransform, Direction direction)
+        {
+            var camera = Camera.main;
+            var corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+            
+            var width = Mathf.Abs(corners[3].x - corners[0].x);
+            var height = Mathf.Abs(corners[1].y - corners[0].y);
+            
+            var screenPosition = camera.WorldToScreenPoint(rectTransform.position);
+            var targetPosition = Vector3.zero;
+            
+            switch (direction)
+            {
+                case Direction.LEFT:
+                    targetPosition = camera.ScreenToWorldPoint( new Vector3(0, screenPosition.y, screenPosition.z)) + Vector3.left * (width * rectTransform.pivot.x);
+                    break;
+                case Direction.RIGHT:
+                    targetPosition = camera.ScreenToWorldPoint(new Vector3(Screen.width, screenPosition.y, screenPosition.z)) + Vector3.right * (width * rectTransform.pivot.x);
+                    break;
+                case Direction.UP:
+                    targetPosition = camera.ScreenToWorldPoint( new Vector3(screenPosition.x, Screen.height, screenPosition.z)) + Vector3.up * (height * rectTransform.pivot.y);
+                    break;
+                case Direction.DOWN:
+                    targetPosition = camera.ScreenToWorldPoint( new Vector3(screenPosition.x, 0, screenPosition.z)) + Vector3.down * (height * rectTransform.pivot.y);
+                    break;
+            }
+            
+            return targetPosition;
+        }
 
         private Vector2 GetOutOfScreenAnchoredPosition(RectTransform rectTransform, Direction direction)
         {
             var camera = Camera.main;
             var canvas = rectTransform.GetComponentInParent<Canvas>().rootCanvas;
 
-            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rectTransform.position);
-            Vector2 targetPos = Vector2.zero;
-
+            var screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rectTransform.position);
+            Vector2 targetPos;
             switch (direction)
             {
                 case Direction.LEFT:
@@ -91,9 +123,25 @@ namespace JOGUI
                 case Direction.DOWN:
                     targetPos = new Vector2(screenPosition.x, -rectTransform.rect.height * canvas.scaleFactor + rectTransform.rect.height * canvas.scaleFactor * rectTransform.pivot.y);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
             }
 
-            return rectTransform.anchoredPosition + (targetPos - screenPosition);
+            var anchoredPosition = rectTransform.anchoredPosition + (targetPos - screenPosition);
+
+            switch (direction)
+            {
+                case Direction.LEFT:
+                case Direction.RIGHT:
+                    anchoredPosition.y = _referenceWorldPosition.y;
+                    break;
+                case Direction.UP:
+                case Direction.DOWN:
+                    anchoredPosition.x = _referenceWorldPosition.x;
+                    break;
+            }
+
+            return anchoredPosition;
         }
     }
 }

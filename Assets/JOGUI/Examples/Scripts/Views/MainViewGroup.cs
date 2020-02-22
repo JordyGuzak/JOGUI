@@ -1,9 +1,7 @@
-﻿using JOGUI;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class MainViewGroup : ViewGroup
+﻿namespace JOGUI.Examples
 {
+    public class MainViewGroup : ViewGroup
+    {
 
+    }
 }

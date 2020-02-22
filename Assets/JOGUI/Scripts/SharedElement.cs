@@ -28,4 +28,8 @@ public class SharedElement : MonoBehaviour
     }
 
     public string Name;
+    public bool OverrideTransitionSettings = false;
+    public float StartDelay = 0f;
+    public float Duration = 0.5f;
+    public EaseType EaseType = EaseType.EaseInOutCubic;
 }

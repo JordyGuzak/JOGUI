@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace JOGUI
@@ -36,18 +37,18 @@ namespace JOGUI
                         var startPosition = GetStartPosition(sourceElement.RectTransform, destinationElement.RectTransform);
 
                         tweens.Add(new UITween<Vector3>(startPosition, destinationElement.RectTransform.position)
-                            .SetDelay(StartDelay)
-                            .SetDuration(Duration)
-                            .SetEase(EaseType)
+                            .SetDelay(destinationElement.OverrideTransitionSettings ? destinationElement.StartDelay : StartDelay)
+                            .SetDuration(destinationElement.OverrideTransitionSettings ? destinationElement.Duration : Duration)
+                            .SetEase(destinationElement.OverrideTransitionSettings ? destinationElement.EaseType : EaseType)
                             .SetOnUpdate(value => destinationElement.RectTransform.position = value));
                     }
 
                     if (destinationElement.RectTransform.rect.size != sourceElement.RectTransform.rect.size)
                     {
                         tweens.Add(new UITween<Vector2>(sourceElement.RectTransform.rect.size, destinationElement.RectTransform.rect.size)
-                            .SetDelay(StartDelay)
-                            .SetDuration(Duration)
-                            .SetEase(EaseType)
+                            .SetDelay(destinationElement.OverrideTransitionSettings ? destinationElement.StartDelay : StartDelay)
+                            .SetDuration(destinationElement.OverrideTransitionSettings ? destinationElement.Duration : Duration)
+                            .SetEase(destinationElement.OverrideTransitionSettings ? destinationElement.EaseType : EaseType)
                             .SetOnUpdate(value =>
                             {
                                 destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, value.x);
@@ -83,7 +84,7 @@ namespace JOGUI
             return this;
         }
 
-        public override void OnTransitionStart()
+        protected override void OnTransitionStart()
         {
             base.OnTransitionStart();
 
@@ -94,10 +95,31 @@ namespace JOGUI
             }
         }
 
-        public override void OnTransitionComplete()
+        protected override void OnTransitionComplete()
         {
             base.OnTransitionComplete();
 
+            if (Parent != null) return;
+            foreach (var pair in _pairs)
+            {
+                pair.Source.gameObject.SetActive(true);
+                pair.Destination.CanvasGroup.ignoreParentGroups = false;
+            }
+        }
+
+        protected override ITween[] CreateAnimatorsAndSetupCompleteListener()
+        {
+            if (Parent != null)
+            {
+                Parent.TransitionComplete += OnParentTransitionComplete;
+            }
+
+            return base.CreateAnimatorsAndSetupCompleteListener();
+        }
+
+        private void OnParentTransitionComplete(Transition transition)
+        {
+            Parent.TransitionComplete -= OnParentTransitionComplete;
             foreach (var pair in _pairs)
             {
                 pair.Source.gameObject.SetActive(true);

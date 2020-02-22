@@ -13,7 +13,7 @@ namespace JOGUI.Examples
         private void Awake()
         {
             _drawerTransition = new TransitionSet(TransitionMode.PARALLEL)
-                .Add(new Slide(_drawer.anchoredPosition, SlideMode.IN, Direction.RIGHT)
+                .Add(new Slide(_drawer.position, SlideMode.IN, Direction.RIGHT)
                     .AddTarget(_drawer)
                     .SetDuration(_transitionDuration)
                     .SetEaseType(EaseType.EaseInOutCubic))

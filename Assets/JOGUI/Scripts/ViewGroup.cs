@@ -1,16 +1,35 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace JOGUI
 {
     public abstract class ViewGroup : View
     {
+        [SerializeField] private RectTransform _viewsContainer;
+
         protected Dictionary<Type, View> _viewsDict = new Dictionary<Type, View>();
         protected Stack<View> _history = new Stack<View>();
         protected View _activeView;
         protected bool _initialized;
 
-        private void Awake()
+        public override Dictionary<string, SharedElement> SharedElements 
+        {
+            get
+            {
+                if (_activeView != null)
+                {
+                    return MergeSharedElements(base.SharedElements, _activeView.SharedElements);
+                }
+
+                return base.SharedElements;
+            }
+            protected set => base.SharedElements = value; 
+        }
+
+        protected virtual void Awake()
         {
             InitializeChildViews();
         }
@@ -21,9 +40,12 @@ namespace JOGUI
 
             bool first = true;
 
-            for (int i = 0; i < transform.childCount; i++)
+            if (_viewsContainer == null)
+                _viewsContainer = RectTransform;
+
+            for (int i = 0; i < _viewsContainer.childCount; i++)
             {
-                var view = transform.GetChild(i).GetComponent<View>();
+                var view = _viewsContainer.GetChild(i).GetComponent<View>();
 
                 if (view && !_viewsDict.ContainsKey(view.GetType()))
                 {
@@ -43,34 +65,61 @@ namespace JOGUI
             _initialized = true;
         }
 
-        //public void StartTransition(View source, Transition sourceExitTransition, View destination, Transition destinationEnterTransition, TransitionMode transitionMode = TransitionMode.PARALLEL, Dictionary<string, object> bundle = null)
-        //{
-        //    if (transitionMode == TransitionMode.PARALLEL)
-        //    {
-        //        destination.gameObject.SetActive(true);
-        //        destination.transform.SetAsLastSibling();
-        //        destination.OnEnter(bundle ?? new Dictionary<string, object>());
-        //    }
+        public override void OnEnter(Dictionary<string, object> bundle)
+        {
+            base.OnEnter(bundle);
 
-        //    if (transitionMode == TransitionMode.SEQUENTIAL)
-        //    {
-        //        sourceExitTransition.SetOnComplete(() =>
-        //        {
-        //            destination.gameObject.SetActive(true);
+            if (_activeView != null)
+            {
+                _activeView.OnEnter(bundle);
+            }
+        }
 
-        //        });
-        //    }
+        public override void OnExit()
+        {
+            base.OnExit();
 
-        //    var transitionSet = new TransitionSet(transitionMode)
-        //        .Add(sourceExitTransition)
-        //        .Add(destinationEnterTransition)
-        //        .SetOnComplete(() =>
-        //        {
-                    
-        //        });
+            if (_activeView != null)
+            {
+                _activeView.OnExit();
+            }
+        }
 
-        //    source.OnExit();
-        //}
+        public void RegisterView(View view)
+        {
+            if (view != null && !_viewsDict.ContainsKey(view.GetType()))
+            {
+                _viewsDict.Add(view.GetType(), view);
+                view.Initialize(this);
+            }
+        }
+
+        public void ClearHistory()
+        {
+            _history.Clear();
+        }
+
+        public void Navigate(View destination, Transition transition, Dictionary<string, object> bundle = null)
+        {
+            destination.transform.SetAsLastSibling();
+            destination.OnEnter(bundle ?? new Dictionary<string, object>());
+
+            if (_activeView != null)
+            {
+                _activeView.OnExit();
+                transition?.SetOnComplete(_activeView.OnExitFinished);
+                _history.Push(_activeView);
+            }
+
+            destination.SetAlpha(0);
+            StartCoroutine(DelayedCall(() =>
+            {
+                destination.SetAlpha(1);
+                transition?.Run();
+            }));
+
+            _activeView = destination;
+        }
 
         public void Navigate(Type destinationViewType, Dictionary<string, object> bundle = null)
         {
@@ -82,11 +131,12 @@ namespace JOGUI
 
         public void Navigate(View destination, Dictionary<string, object> bundle = null)
         {
+            if (destination == null) return;
+
             if (_activeView == destination)
             {
                 if (!_activeView.gameObject.activeSelf)
                 {
-                    _activeView.gameObject.SetActive(true);
                     _activeView.transform.SetAsLastSibling();
                     _activeView.OnEnter(bundle ?? new Dictionary<string, object>());
                 }
@@ -96,7 +146,6 @@ namespace JOGUI
 
             if (_activeView == null)
             {
-                destination.gameObject.SetActive(true);
                 destination.transform.SetAsLastSibling();
                 destination.OnEnter(bundle ?? new Dictionary<string, object>());
                 _activeView = destination;
@@ -105,24 +154,25 @@ namespace JOGUI
 
             var source = _activeView;
 
-            destination.gameObject.SetActive(true);
-            destination.transform.SetAsLastSibling();
-
             source.OnExit();
             destination.OnEnter(bundle ?? new Dictionary<string, object>());
+            destination.transform.SetAsLastSibling();
 
             var destinationEnterTransition = destination.GetEnterTransition();
             var sourceExitTransition = source.GetExitTransition();
-            InitializeSharedElementTransitions(destinationEnterTransition, source.SharedElements);
+            InitializeSharedElementTransitions(destinationEnterTransition, source.SharedElements, destination.SharedElements);
 
             var transition = new TransitionSet(TransitionMode.PARALLEL)
                 .Add(sourceExitTransition)
                 .Add(destinationEnterTransition)
-                .SetOnComplete(() =>
-                {
-                    source.gameObject.SetActive(false);
-                });
+                .SetOnComplete(source.OnExitFinished);
 
+            // destination.SetAlpha(0);
+            // StartCoroutine(DelayedCall(() =>
+            // {
+            //     destination.SetAlpha(1);
+            //     transition.Run();
+            // }));
             transition.Run();
 
             _history.Push(_activeView);
@@ -136,24 +186,28 @@ namespace JOGUI
             var source = _activeView;
             var destination = _history.Pop();
 
-            destination.gameObject.SetActive(true);
-            destination.transform.SetAsLastSibling();
-
             source.OnExit();
             destination.OnEnter(destination.Bundle ?? new Dictionary<string, object>());
 
             var destinationReEnterTransition = destination.GetReEnterTransition();
             var sourceReturnTransition = source.GetReturnTransition();
-            InitializeSharedElementTransitions(destinationReEnterTransition, source.SharedElements);
+            InitializeSharedElementTransitions(sourceReturnTransition, source.SharedElements, destination.SharedElements);
 
             var transition = new TransitionSet(TransitionMode.PARALLEL)
                 .Add(sourceReturnTransition)
                 .Add(destinationReEnterTransition)
                 .SetOnComplete(() =>
                 {
-                    source.gameObject.SetActive(false);
+                    source.OnExitFinished();
+                    destination.transform.SetAsLastSibling();
                 });
 
+            // destination.SetAlpha(0);
+            // StartCoroutine(DelayedCall(() =>
+            // {
+            //     destination.SetAlpha(1);
+            //     transition.Run();
+            // }));
             transition.Run();
 
             _activeView = destination;
@@ -174,19 +228,33 @@ namespace JOGUI
             return false;
         }
 
-        private void InitializeSharedElementTransitions(Transition transition, Dictionary<string, SharedElement> sourceElements)
+        private void InitializeSharedElementTransitions(Transition transition, Dictionary<string, SharedElement> sourceElements, Dictionary<string, SharedElement> destinationElements)
         {
             if (transition is SharedElementsTransition shared)
             {
                 shared.SetSourceSharedElements(sourceElements);
+                shared.SetDestinationSharedElements(destinationElements);
             }
             else if (transition is TransitionSet set)
             {
                 foreach (var t in set.Transitions)
                 {
-                    InitializeSharedElementTransitions(t, sourceElements);
+                    InitializeSharedElementTransitions(t, sourceElements, destinationElements);
                 }
             }
+        }
+
+        private Dictionary<string, SharedElement> MergeSharedElements(Dictionary<string, SharedElement> a, Dictionary<string, SharedElement> b)
+        {
+            return a.Concat(b)
+                .GroupBy(p  => p.Key)
+                .ToDictionary(group => group.Key, group => group.First().Value);
+        }
+
+        private IEnumerator DelayedCall(Action action)
+        {
+            yield return new WaitForEndOfFrame();
+            action?.Invoke();
         }
     }
 }

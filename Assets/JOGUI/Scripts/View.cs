@@ -18,12 +18,25 @@ namespace JOGUI
             }
         }
 
-        public Dictionary<string, SharedElement> SharedElements { get; private set; }
+        private CanvasGroup _canvasGroup;
+        public CanvasGroup CanvasGroup
+        {
+            get
+            {
+                if (_canvasGroup == null)
+                    _canvasGroup = GetComponent<CanvasGroup>();
+
+                return _canvasGroup;
+            }
+        }
+
+        public virtual Dictionary<string, SharedElement> SharedElements { get; protected set; }
 
         public Dictionary<string, object> Bundle { get; private set; }
 
         public ViewGroup ViewGroup { get; private set; }
-        private CanvasGroup _canvasGroup;
+
+        protected Vector2 _anchoredPosition;
 
         /// <summary>
         /// Initialize is called by the ViewGroup to setup navigation and shared elements
@@ -32,6 +45,7 @@ namespace JOGUI
         {
             ViewGroup = viewGroup;
             SetupSharedElements();
+            _anchoredPosition = RectTransform.anchoredPosition;
         }
 
         /// <summary>
@@ -40,7 +54,9 @@ namespace JOGUI
         /// <param name="data"></param>
         public virtual void OnEnter(Dictionary<string, object> bundle)
         {
+            gameObject.SetActive(true);
             Bundle = bundle;
+            CanvasGroup.alpha = 1f;
         }
 
         /// <summary>
@@ -48,6 +64,15 @@ namespace JOGUI
         /// </summary>
         public virtual void OnExit()
         {
+        }
+
+        /// <summary>
+        /// Lifecycle method that gets called by the ViewGroup when the exit transition finished.
+        /// </summary>
+        public virtual void OnExitFinished()
+        {
+            gameObject.SetActive(false);
+            RectTransform.anchoredPosition = _anchoredPosition;
         }
 
         /// <summary>
@@ -88,16 +113,18 @@ namespace JOGUI
             return GetEnterTransition()?.Reversed();
         }
 
+        public void GoBack()
+        {
+            ViewGroup.Back();
+        }
+
         /// <summary>
         /// Sets the alpha property of the CanvasGroup on this GameObject
         /// </summary>
         /// <param name="alpha"></param>
         public void SetAlpha(float alpha)
         {
-            if (_canvasGroup == null)
-                _canvasGroup = GetComponent<CanvasGroup>();
-
-            _canvasGroup.alpha = alpha;
+            CanvasGroup.alpha = alpha;
         }
 
         /// <summary>
@@ -131,7 +158,8 @@ namespace JOGUI
                 if (string.IsNullOrWhiteSpace(sharedElements[i].Name))
                     continue;
 
-                SharedElements.Add(sharedElements[i].Name, sharedElements[i]);
+                if (!SharedElements.ContainsKey(sharedElements[i].Name))
+                    SharedElements.Add(sharedElements[i].Name, sharedElements[i]);
             }
         }
 
