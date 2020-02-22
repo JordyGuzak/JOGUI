@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace JOGUI
@@ -9,52 +8,44 @@ namespace JOGUI
         public SharedElement Source { get; set; }
         public SharedElement Destination { get; set; }
     }
-
+    
     public class SharedElementsTransition : Transition
     {
-        private Dictionary<string, SharedElement> _sourceElements = new Dictionary<string, SharedElement>();
-        private Dictionary<string, SharedElement> _destinationElements = new Dictionary<string, SharedElement>();
-        private List<SharedElementPair> _pairs = new List<SharedElementPair>();
+        public override float TotalDuration => (_tweens == null || _tweens.Length == 0) ? 0 : base.TotalDuration;
+        
+        private HashSet<SharedElementPair> _pairs = new HashSet<SharedElementPair>();
 
         protected override ITween[] CreateAnimators()
         {
             var tweens = new List<ITween>();
-            _pairs = new List<SharedElementPair>();
 
-            foreach (var pair in _destinationElements)
+            foreach (var pair in _pairs)
             {
-                if (_sourceElements.TryGetValue(pair.Key, out SharedElement sourceElement))
+                var sourceElement = pair.Source;
+                var destinationElement = pair.Destination;
+
+                if (destinationElement.RectTransform.position != sourceElement.RectTransform.position)
                 {
-                    var destinationElement = pair.Value;
-                    _pairs.Add(new SharedElementPair()
-                    {
-                        Source = sourceElement,
-                        Destination = destinationElement
-                    });
+                    var startPosition = GetStartPosition(sourceElement.RectTransform, destinationElement.RectTransform);
 
-                    if (destinationElement.RectTransform.position != sourceElement.RectTransform.position)
-                    {
-                        var startPosition = GetStartPosition(sourceElement.RectTransform, destinationElement.RectTransform);
+                    tweens.Add(new UITween<Vector3>(startPosition, destinationElement.RectTransform.position)
+                        .SetDelay(StartDelay)
+                        .SetDuration(Duration)
+                        .SetEase(EaseType)
+                        .SetOnUpdate(value => destinationElement.RectTransform.position = value));
+                }
 
-                        tweens.Add(new UITween<Vector3>(startPosition, destinationElement.RectTransform.position)
-                            .SetDelay(destinationElement.OverrideTransitionSettings ? destinationElement.StartDelay : StartDelay)
-                            .SetDuration(destinationElement.OverrideTransitionSettings ? destinationElement.Duration : Duration)
-                            .SetEase(destinationElement.OverrideTransitionSettings ? destinationElement.EaseType : EaseType)
-                            .SetOnUpdate(value => destinationElement.RectTransform.position = value));
-                    }
-
-                    if (destinationElement.RectTransform.rect.size != sourceElement.RectTransform.rect.size)
-                    {
-                        tweens.Add(new UITween<Vector2>(sourceElement.RectTransform.rect.size, destinationElement.RectTransform.rect.size)
-                            .SetDelay(destinationElement.OverrideTransitionSettings ? destinationElement.StartDelay : StartDelay)
-                            .SetDuration(destinationElement.OverrideTransitionSettings ? destinationElement.Duration : Duration)
-                            .SetEase(destinationElement.OverrideTransitionSettings ? destinationElement.EaseType : EaseType)
-                            .SetOnUpdate(value =>
-                            {
-                                destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, value.x);
-                                destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, value.y);
-                            }));
-                    }
+                if (destinationElement.RectTransform.rect.size != sourceElement.RectTransform.rect.size)
+                {
+                    tweens.Add(new UITween<Vector2>(sourceElement.RectTransform.rect.size, destinationElement.RectTransform.rect.size)
+                        .SetDelay(StartDelay)
+                        .SetDuration(Duration)
+                        .SetEase(EaseType)
+                        .SetOnUpdate(value =>
+                        {
+                            destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, value.x);
+                            destinationElement.RectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, value.y);
+                        }));
                 }
             }
 
@@ -64,23 +55,34 @@ namespace JOGUI
         public override Transition Reversed()
         {
             return new SharedElementsTransition()
-                .SetSourceSharedElements(_destinationElements)
-                .SetDestinationSharedElements(_sourceElements)
+                .SetPairs(_pairs)
                 .SetStartDelay(StartDelay)
                 .SetDuration(Duration)
                 .SetEaseType(EaseType)
                 .SetOnComplete(_onCompleteCallback);
         }
 
-        public SharedElementsTransition SetSourceSharedElements(Dictionary<string, SharedElement> sourceElements)
+        public SharedElementsTransition Add(SharedElementPair pair)
         {
-            _sourceElements = sourceElements ?? new Dictionary<string, SharedElement>();
+            _pairs.Add(pair);
             return this;
         }
 
-        public SharedElementsTransition SetDestinationSharedElements(Dictionary<string, SharedElement> destinationElements)
+        public SharedElementsTransition Remove(SharedElementPair pair)
         {
-            _destinationElements = destinationElements ?? new Dictionary<string, SharedElement>();
+            _pairs.Remove(pair);
+            return this;
+        }
+
+        public SharedElementsTransition SetPairs(HashSet<SharedElementPair> pairs)
+        {
+            _pairs = pairs ?? new HashSet<SharedElementPair>();
+            return this;
+        }
+
+        public SharedElementsTransition Clear()
+        {
+            _pairs.Clear();
             return this;
         }
 
@@ -91,7 +93,6 @@ namespace JOGUI
             foreach (var pair in _pairs)
             {
                 pair.Source.gameObject.SetActive(false);
-                pair.Destination.CanvasGroup.ignoreParentGroups = true;
             }
         }
 
@@ -103,18 +104,17 @@ namespace JOGUI
             foreach (var pair in _pairs)
             {
                 pair.Source.gameObject.SetActive(true);
-                pair.Destination.CanvasGroup.ignoreParentGroups = false;
             }
         }
 
-        protected override ITween[] CreateAnimatorsAndSetupCompleteListener()
+        protected override void SetupCompleteListeners(ITween[] tweens)
         {
             if (Parent != null)
             {
                 Parent.TransitionComplete += OnParentTransitionComplete;
             }
 
-            return base.CreateAnimatorsAndSetupCompleteListener();
+            base.SetupCompleteListeners(tweens);
         }
 
         private void OnParentTransitionComplete(Transition transition)
@@ -123,7 +123,6 @@ namespace JOGUI
             foreach (var pair in _pairs)
             {
                 pair.Source.gameObject.SetActive(true);
-                pair.Destination.CanvasGroup.ignoreParentGroups = false;
             }
         }
 

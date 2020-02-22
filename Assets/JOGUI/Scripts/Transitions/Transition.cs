@@ -6,13 +6,15 @@ namespace JOGUI
 {
     public abstract class Transition
     {
+        
+
         public delegate void TransitionCompleteHandler(Transition transition);
         public event TransitionCompleteHandler TransitionComplete;
 
         public Transition Parent { get; set; }
         public float StartDelay { get; protected set; } = 0f;
         public virtual float Duration { get; protected set; } = 0.5f;
-        public float TotalDuration { get { return StartDelay + Duration; } }
+        public virtual float TotalDuration => StartDelay + Duration;
         public EaseType EaseType { get; protected set; } = EaseType.EaseInOutCubic;
         public bool IsRunning { get; protected set; }
 
@@ -55,9 +57,10 @@ namespace JOGUI
 
         public virtual void Run()
         {
-            IsRunning = true;
-            var tweens = CreateAnimatorsAndSetupCompleteListener();  
-            UITweenRunner.Instance.Play(tweens);
+            _tweens = CreateAnimators();
+            SetupCompleteListeners(_tweens);
+            OnTransitionStart();
+            UITweenRunner.Instance.Play(_tweens);
         }
         
         public void Cancel()
@@ -70,13 +73,10 @@ namespace JOGUI
             }
         }
 
-        protected virtual ITween[] CreateAnimatorsAndSetupCompleteListener()
+        protected virtual void SetupCompleteListeners(ITween[] tweens)
         {
-            _tweens = CreateAnimators();
-            OnTransitionStart();
-
             ITween longest = null;
-            foreach (var tween in _tweens)
+            foreach (var tween in tweens)
             {
                 if (longest == null || tween.TotalDuration > longest.TotalDuration)
                     longest = tween;
@@ -93,12 +93,11 @@ namespace JOGUI
             {
                 OnTransitionComplete();
             }
-
-            return _tweens;
         }
 
         protected virtual void OnTransitionStart()
         {
+            IsRunning = true;
             _onStartCallback?.Invoke();
         }
 
@@ -109,7 +108,7 @@ namespace JOGUI
             TransitionComplete?.Invoke(this);
         }
 
-        private void OnLastAnimationFinished(ITween tween)
+        protected void OnLastAnimationFinished(ITween tween)
         {
             tween.OnAnimationFinished -= OnLastAnimationFinished;
             OnTransitionComplete();

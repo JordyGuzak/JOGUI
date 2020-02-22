@@ -7,7 +7,7 @@ namespace JOGUI.Examples
 
         public override Transition GetEnterTransition()
         {
-            return new Slide(RectTransform.position, SlideMode.IN, Direction.RIGHT).AddTarget(RectTransform);
+            return new Slide(Vector2.zero, SlideMode.IN, Direction.RIGHT).AddTarget(RectTransform);
         }
 
         public override Transition GetReEnterTransition()

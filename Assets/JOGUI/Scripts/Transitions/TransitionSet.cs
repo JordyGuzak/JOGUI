@@ -36,7 +36,7 @@ namespace JOGUI
 
         protected override ITween[] CreateAnimators()
         {
-            return new ITween[0];
+            return default;
         }
 
         public override Transition Reversed()
@@ -71,15 +71,15 @@ namespace JOGUI
             switch (Mode)
             {
                 case TransitionMode.PARALLEL:
+                    foreach (var transition in Transitions)
+                    {
+                        transition.Run();
+                    }
+                    
                     var longest = Transitions.OrderByDescending(t => t.TotalDuration).FirstOrDefault();
                     if (longest != null)
                     {
                         longest.TransitionComplete += OnLongestTransitionComplete;
-                    }
-                    
-                    foreach (var transition in Transitions)
-                    {
-                        transition.Run();
                     }
                     break;
                 case TransitionMode.SEQUENTIAL:

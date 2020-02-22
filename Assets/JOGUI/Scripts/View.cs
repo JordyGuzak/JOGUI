@@ -144,6 +144,25 @@ namespace JOGUI
         {
             RectTransform.sizeDelta = size;
         }
+        
+        /// <summary>
+        /// Finds and creates set of shared element pairs between two collections of shared elements.
+        /// </summary>
+        /// <param name="sourceElements"></param>
+        /// <param name="destinationElements"></param>
+        /// <returns>HashSet<SharedElementPair></returns>
+        protected static HashSet<SharedElementPair> CreateSharedElementPairs(Dictionary<string, SharedElement> sourceElements, Dictionary<string, SharedElement> destinationElements)
+        {
+            var sharedElementPairs = new HashSet<SharedElementPair>();
+            foreach (var destination in destinationElements.Values)
+            {
+                if (!sourceElements.TryGetValue(destination.Key, out var source)) continue;
+                if (destination.RectTransform.position == source.RectTransform.position && destination.RectTransform.rect.size == source.RectTransform.rect.size) continue;
+                sharedElementPairs.Add(new SharedElementPair {Source = source, Destination = destination});
+            }
+
+            return sharedElementPairs;
+        }
 
         /// <summary>
         /// Initializes the SharedElements dictionary
@@ -155,11 +174,11 @@ namespace JOGUI
             var sharedElements = GetSharedElementsInChildren(RectTransform);
             for (int i = 0; i < sharedElements.Length; i++)
             {
-                if (string.IsNullOrWhiteSpace(sharedElements[i].Name))
+                if (string.IsNullOrWhiteSpace(sharedElements[i].Key))
                     continue;
 
-                if (!SharedElements.ContainsKey(sharedElements[i].Name))
-                    SharedElements.Add(sharedElements[i].Name, sharedElements[i]);
+                if (!SharedElements.ContainsKey(sharedElements[i].Key))
+                    SharedElements.Add(sharedElements[i].Key, sharedElements[i]);
             }
         }
 

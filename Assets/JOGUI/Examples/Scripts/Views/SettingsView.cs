@@ -11,8 +11,8 @@ namespace JOGUI.Examples
         {
             base.Initialize(viewGroup);
 
-            _enterTransition = new Slide(RectTransform.position, SlideMode.IN, Direction.DOWN).AddTarget(RectTransform);
-            _exitTransition = new Slide(RectTransform.position, SlideMode.OUT, Direction.LEFT).AddTarget(RectTransform);
+            _enterTransition = new Slide(RectTransform.anchoredPosition, SlideMode.IN, Direction.DOWN).AddTarget(RectTransform);
+            _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.LEFT).AddTarget(RectTransform);
         }
 
         public override Transition GetEnterTransition()
@@ -28,7 +28,7 @@ namespace JOGUI.Examples
         public override Transition GetReEnterTransition()
         {
             return new TransitionSet(TransitionMode.PARALLEL)
-                .Add(new Slide(RectTransform.position, SlideMode.IN, Direction.LEFT).AddTarget(RectTransform))
+                .Add(new Slide(Vector2.zero, SlideMode.IN, Direction.LEFT).AddTarget(RectTransform))
                 .Add(new Fade(0, 1).AddTarget(this));
         }
 

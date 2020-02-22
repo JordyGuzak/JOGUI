@@ -13,7 +13,7 @@ namespace JOGUI
         protected Dictionary<Type, View> _viewsDict = new Dictionary<Type, View>();
         protected Stack<View> _history = new Stack<View>();
         protected View _activeView;
-        protected bool _initialized;
+        private Canvas _viewOverlay;
 
         public override Dictionary<string, SharedElement> SharedElements 
         {
@@ -31,38 +31,7 @@ namespace JOGUI
 
         protected virtual void Awake()
         {
-            InitializeChildViews();
-        }
-
-        protected void InitializeChildViews()
-        {
-            if (_initialized) return;
-
-            bool first = true;
-
-            if (_viewsContainer == null)
-                _viewsContainer = RectTransform;
-
-            for (int i = 0; i < _viewsContainer.childCount; i++)
-            {
-                var view = _viewsContainer.GetChild(i).GetComponent<View>();
-
-                if (view && !_viewsDict.ContainsKey(view.GetType()))
-                {
-                    view.Initialize(this);
-                    _viewsDict.Add(view.GetType(), view);
-
-                    view.gameObject.SetActive(first);
-
-                    if (first)
-                    {
-                        first = false;
-                        _activeView = view;
-                    }
-                }
-            }
-
-            _initialized = true;
+            Initialize();
         }
 
         public override void OnEnter(Dictionary<string, object> bundle)
@@ -104,20 +73,27 @@ namespace JOGUI
             destination.transform.SetAsLastSibling();
             destination.OnEnter(bundle ?? new Dictionary<string, object>());
 
-            if (_activeView != null)
+            var source = _activeView ? _activeView : null;
+
+            if (source != null)
             {
-                _activeView.OnExit();
-                transition?.SetOnComplete(_activeView.OnExitFinished);
-                _history.Push(_activeView);
+                source.OnExit();
+                _history.Push(source);
+                var sharedElementTransitions = GetSharedElementTransitionsRecursively(transition);
+                InitializeSharedElementTransitions(sharedElementTransitions, source.SharedElements, destination.SharedElements);
             }
 
-            destination.SetAlpha(0);
-            StartCoroutine(DelayedCall(() =>
-            {
-                destination.SetAlpha(1);
-                transition?.Run();
-            }));
-
+            var transitionSet = new TransitionSet()
+                .Add(transition)
+                .SetOnComplete(() =>
+                {
+                    MoveSharedElementsToOriginalParent();
+                    
+                    if (source != null)
+                        source.OnExitFinished();
+                });
+            
+            transitionSet.Run();
             _activeView = destination;
         }
 
@@ -160,21 +136,19 @@ namespace JOGUI
 
             var destinationEnterTransition = destination.GetEnterTransition();
             var sourceExitTransition = source.GetExitTransition();
-            InitializeSharedElementTransitions(destinationEnterTransition, source.SharedElements, destination.SharedElements);
+            var sharedElementTransitions = GetSharedElementTransitionsRecursively(destinationEnterTransition);
+            InitializeSharedElementTransitions(sharedElementTransitions, source.SharedElements, destination.SharedElements);
 
             var transition = new TransitionSet(TransitionMode.PARALLEL)
                 .Add(sourceExitTransition)
                 .Add(destinationEnterTransition)
-                .SetOnComplete(source.OnExitFinished);
-
-            // destination.SetAlpha(0);
-            // StartCoroutine(DelayedCall(() =>
-            // {
-            //     destination.SetAlpha(1);
-            //     transition.Run();
-            // }));
+                .SetOnComplete(() =>
+                {
+                    MoveSharedElementsToOriginalParent();
+                    source.OnExitFinished();
+                });
+            
             transition.Run();
-
             _history.Push(_activeView);
             _activeView = destination;
         }
@@ -191,25 +165,20 @@ namespace JOGUI
 
             var destinationReEnterTransition = destination.GetReEnterTransition();
             var sourceReturnTransition = source.GetReturnTransition();
-            InitializeSharedElementTransitions(sourceReturnTransition, source.SharedElements, destination.SharedElements);
+            var sharedElementTransitions = GetSharedElementTransitionsRecursively(sourceReturnTransition);
+            InitializeSharedElementTransitions(sharedElementTransitions, source.SharedElements, destination.SharedElements);
 
             var transition = new TransitionSet(TransitionMode.PARALLEL)
                 .Add(sourceReturnTransition)
                 .Add(destinationReEnterTransition)
                 .SetOnComplete(() =>
                 {
+                    MoveSharedElementsToOriginalParent();
                     source.OnExitFinished();
                     destination.transform.SetAsLastSibling();
                 });
-
-            // destination.SetAlpha(0);
-            // StartCoroutine(DelayedCall(() =>
-            // {
-            //     destination.SetAlpha(1);
-            //     transition.Run();
-            // }));
+            
             transition.Run();
-
             _activeView = destination;
         }
 
@@ -227,20 +196,104 @@ namespace JOGUI
             view = default;
             return false;
         }
-
-        private void InitializeSharedElementTransitions(Transition transition, Dictionary<string, SharedElement> sourceElements, Dictionary<string, SharedElement> destinationElements)
+        
+        private void Initialize()
         {
-            if (transition is SharedElementsTransition shared)
+            if (_viewsContainer == null)
+                _viewsContainer = RectTransform;
+
+            _viewOverlay = CreateViewOverlay();
+            _viewOverlay.transform.SetAsFirstSibling();
+            InitializeChildViews();
+        }
+
+        private void InitializeChildViews()
+        {
+            bool first = true;
+
+            for (int i = 0; i < _viewsContainer.childCount; i++)
             {
-                shared.SetSourceSharedElements(sourceElements);
-                shared.SetDestinationSharedElements(destinationElements);
-            }
-            else if (transition is TransitionSet set)
-            {
-                foreach (var t in set.Transitions)
+                var view = _viewsContainer.GetChild(i).GetComponent<View>();
+
+                if (view && !_viewsDict.ContainsKey(view.GetType()))
                 {
-                    InitializeSharedElementTransitions(t, sourceElements, destinationElements);
+                    view.Initialize(this);
+                    _viewsDict.Add(view.GetType(), view);
+
+                    view.gameObject.SetActive(first);
+
+                    if (first)
+                    {
+                        first = false;
+                        _activeView = view;
+                    }
                 }
+            }
+        }
+
+        private Canvas CreateViewOverlay()
+        {
+            var viewOverlayRectTransform = new GameObject("View Overlay", typeof(RectTransform)).GetComponent<RectTransform>();
+            viewOverlayRectTransform.transform.SetParent(_viewsContainer ? _viewsContainer : transform, false);
+            viewOverlayRectTransform.anchorMax = Vector2.one;
+            viewOverlayRectTransform.anchorMin = Vector2.zero;
+            viewOverlayRectTransform.offsetMin = Vector2.zero;
+            viewOverlayRectTransform.offsetMax = Vector2.zero;
+            var viewOverlay = viewOverlayRectTransform.gameObject.AddComponent<Canvas>();
+            viewOverlay.overrideSorting = true;
+            viewOverlay.sortingOrder = 999;
+            return viewOverlay;
+        }
+
+        private List<SharedElementsTransition> GetSharedElementTransitionsRecursively(Transition transition)
+        {
+            var sharedElementTransitions = new List<SharedElementsTransition>();
+            switch (transition)
+            {
+                case SharedElementsTransition shared:
+                    sharedElementTransitions.Add(shared);
+                    break;
+                case TransitionSet set:
+                {
+                    foreach (var t in set.Transitions)
+                    {
+                        sharedElementTransitions.AddRange(GetSharedElementTransitionsRecursively(t));
+                    }
+
+                    break;
+                }
+            }
+
+            return sharedElementTransitions;
+        }
+
+        private void InitializeSharedElementTransitions(List<SharedElementsTransition> sharedElementTransitions, Dictionary<string, SharedElement> sourceElements, Dictionary<string, SharedElement> destinationElements)
+        {
+            foreach (var shared in sharedElementTransitions)
+            {
+                var sharedElementPairs = CreateSharedElementPairs(sourceElements, destinationElements);
+                shared.SetPairs(sharedElementPairs);
+                MoveSharedElementsToOverlayView(sharedElementPairs.Select(p => p.Destination));
+            }
+        }
+
+        private void MoveSharedElementsToOverlayView(IEnumerable<SharedElement> sharedElements)
+        {
+            foreach (var sharedElement in sharedElements)
+            {
+                sharedElement.OriginalParent = sharedElement.RectTransform.parent;
+                sharedElement.OriginalSiblingIndex = sharedElement.RectTransform.GetSiblingIndex();
+                sharedElement.RectTransform.SetParent(_viewOverlay.transform, true);
+            }
+        }
+
+        private void MoveSharedElementsToOriginalParent()
+        {
+            var sharedElements = _viewOverlay.GetComponentsInChildren<SharedElement>(true);
+            foreach (var sharedElement in sharedElements)
+            {
+                sharedElement.RectTransform.SetParent(sharedElement.OriginalParent, true);
+                sharedElement.RectTransform.SetSiblingIndex(sharedElement.OriginalSiblingIndex);
             }
         }
 
