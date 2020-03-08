@@ -155,7 +155,6 @@ namespace JOGUI
             var mainAxis = FlexDirection == FlexDirection.Row ? 0 : 1;
             var crossAxis = mainAxis == 0 ? 1 : 0;
             var positionPointer = Vector2.zero;
-            var items = new List<RectTransform>();
             var currentLine = CreateNewLine(positionPointer);
             var lines = new List<Line> {currentLine};
 
@@ -163,7 +162,6 @@ namespace JOGUI
             {
                 var element = GetOrAddFlexElement((RectTransform)container.GetChild(i));
                 var elementRect = element.RectTransform;
-                items.Add(elementRect);
                 elementRect.anchorMin = Vector2.up;
                 elementRect.anchorMax = Vector2.up;
                 elementRect.sizeDelta = element.FlexBasis;
@@ -250,67 +248,37 @@ namespace JOGUI
             line.UsedSpace = lineSize;
         }
 
-        private void AlignContentAlongAxis(int axis, Vector2 containerSize, List<Line> lines, Alignment alignment)
+        private void ApplyJustifyContent(int mainAxis, Vector2 containerSize, List<Line> lines)
         {
             if (lines.Count == 0) return;
             
-            var isMainAxis = axis == lines[0].MainAxis;
-            var max = 0f;
-            if (isMainAxis)
-            {
-                var largestLine = lines.OrderByDescending(l => l.UsedSpace[axis]).First();
-                max = largestLine.UsedSpace[axis] + (largestLine.Items.Count - 1) * Spacing;
-            }
-            else
-            {
-                max = lines.Sum(l => l.UsedSpace[axis]) + (lines.Count - 1) * Spacing;
-            }
-        
+            var largestLine = lines.OrderByDescending(l => l.UsedSpace[mainAxis]).First();
+            var max = largestLine.UsedSpace[mainAxis] + (largestLine.Items.Count - 1) * Spacing;
+            
             float offset = 0;
-            switch (alignment)
+            switch (JustifyContent)
             {
-                case Alignment.Start:
+                case JustifyContent.Start:
                     break;
-                case Alignment.Center:
-                    offset = (containerSize[axis] - max) * 0.5f;
+                case JustifyContent.Center:
+                    offset = (containerSize[mainAxis] - max) * 0.5f;
                     break;
-                case Alignment.End:
-                    offset = containerSize[axis] - max;
+                case JustifyContent.End:
+                    offset = containerSize[mainAxis] - max;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
 
-            if (axis == 1)
+            if (mainAxis == 1)
                 offset *= -1;
 
             foreach (var item in lines.SelectMany(l => l.Items))
             {
                 var delta = Vector2.zero;
-                delta[axis] = offset;
+                delta[mainAxis] = offset;
                 item.RectTransform.anchoredPosition += delta;
             }
-        }
-
-        private void ApplyJustifyContent(int mainAxis, Vector2 containerSize, List<Line> lines)
-        {
-            Alignment alignment;
-            switch (JustifyContent)
-            {
-                case JustifyContent.Start:
-                    alignment = Alignment.Start;
-                    break;
-                case JustifyContent.Center:
-                    alignment = Alignment.Center;
-                    break;
-                case JustifyContent.End:
-                    alignment = Alignment.End;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-            
-            AlignContentAlongAxis(mainAxis, containerSize, lines, alignment);
         }
 
         private void ApplyAlignContent(int crossAxis, Vector2 containerSize, List<Line> lines)
