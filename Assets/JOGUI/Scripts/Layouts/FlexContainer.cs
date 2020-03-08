@@ -28,6 +28,14 @@ namespace JOGUI
         End
     }
 
+    public enum AlignItems
+    {
+        Start,
+        Center,
+        End,
+        Stretch
+    }
+
     public enum AlignContent
     {
         Start,
@@ -58,11 +66,12 @@ namespace JOGUI
             public int MainAxis { get; }
             public int CrossAxis { get; }
 
-            public Line(int mainAxis, int crossAxis, Vector2 position)
+            public Line(int mainAxis, int crossAxis, Vector2 position, Vector2 size)
             {
                 MainAxis = mainAxis;
                 CrossAxis = crossAxis;
                 Position = position;
+                Size = size;
             }
 
             public void Add(FlexElement element)
@@ -105,6 +114,13 @@ namespace JOGUI
             get => alignContent;
             set => SetProperty(ref alignContent, value);
         }
+        
+        [SerializeField] protected AlignItems alignItems;
+        public AlignItems AlignItems
+        {
+            get => alignItems;
+            set => SetProperty(ref alignItems, value);
+        }
 
         [SerializeField] protected float _spacing;
         public float Spacing
@@ -140,7 +156,6 @@ namespace JOGUI
             var crossAxis = mainAxis == 0 ? 1 : 0;
             var positionPointer = Vector2.zero;
             var items = new List<RectTransform>();
-            var currentLineSize = Vector2.zero;
             var currentLine = CreateNewLine(positionPointer);
             var lines = new List<Line> {currentLine};
 
@@ -154,18 +169,12 @@ namespace JOGUI
                 elementRect.sizeDelta = element.FlexBasis;
                 var elementSize = element.FlexBasis;
 
-                if (WrapMode == WrapMode.Wrap && Mathf.Abs(positionPointer[mainAxis]) + elementSize[mainAxis] > currentLineSize[mainAxis])
+                if (WrapMode == WrapMode.Wrap && Mathf.Abs(positionPointer[mainAxis]) + elementSize[mainAxis] > container.rect.size[mainAxis])
                 {
-                    var offset = currentLineSize[crossAxis] + Spacing;
-                    positionPointer[crossAxis] += offset * (FlexDirection == FlexDirection.Row ? -1 : 1);
                     positionPointer[mainAxis] = 0;
-                    currentLine.Size = currentLineSize;
                     currentLine = CreateNewLine(positionPointer);
                     lines.Add(currentLine);
                 }
-                
-                if (elementSize[crossAxis] > currentLineSize[crossAxis]) 
-                    currentLineSize[crossAxis] = elementSize[crossAxis];
 
                 // position flex element
                 var pivot = elementRect.pivot;
@@ -178,20 +187,19 @@ namespace JOGUI
 
             Line CreateNewLine(Vector2 position)
             {
-                currentLineSize[mainAxis] = container.rect.size[mainAxis];
-                currentLineSize[crossAxis] = 0;
-                return new Line(mainAxis, crossAxis, position);
+                var size = container.rect.size;
+                size[crossAxis] = 0;
+                return new Line(mainAxis, crossAxis, position, size);
             }
             
-            currentLine.Size = currentLineSize;
-
             foreach (var line in lines)
             {
                 ApplyFlexGrow(mainAxis, line);
             }
-            
-            ApplyJustifyContent(mainAxis, container.rect.size, lines);
+
             ApplyAlignContent(crossAxis, container.rect.size, lines);
+            ApplyJustifyContent(mainAxis, container.rect.size, lines);
+            ApplyAlignItems(crossAxis, lines);
             _isDirty = false;
         }
         
@@ -304,51 +312,89 @@ namespace JOGUI
             
             AlignContentAlongAxis(mainAxis, containerSize, lines, alignment);
         }
-        
+
         private void ApplyAlignContent(int crossAxis, Vector2 containerSize, List<Line> lines)
         {
-            if (AlignContent == AlignContent.Stretch)
+            var positionPointer = Vector2.zero;
+            var contentSize = Vector2.zero;
+            var offsetMultiplier = 0f;
+            for (int i = 0; i < lines.Count; i++)
             {
-                var lineSize = containerSize[crossAxis] / lines.Count;
-                for (int i = 0; i < lines.Count; i++)
-                {
-                    var line = lines[i];
-                    var position = line.Position;
-                    position[crossAxis] = lineSize * i + (i > 0 ? Spacing : 0);
-                    foreach (var item in line.Items)
-                    {
-                        var size = item.RectTransform.sizeDelta;
-                        size[crossAxis] = lineSize - (i > 0 ? Spacing : 0);
-                        item.RectTransform.sizeDelta = size;
-                        
-                        var pivot = item.RectTransform.pivot;
-                        var anchoredPosition = item.RectTransform.anchoredPosition;
-                        anchoredPosition[crossAxis] = (position[crossAxis] + size[crossAxis] * pivot[crossAxis]) * (crossAxis == 0 ? 1 : -1);
-                        item.RectTransform.anchoredPosition = anchoredPosition;
-                        //item.RectTransform.anchoredPosition = new Vector2(position.x + size.x * pivot.x, position.y - size.y * (1f - pivot.y));
-                    }
-                }
-            }
-            else
-            {
-                Alignment alignment;
+                var line = lines[i];
+                var lineSize = 0f;
                 switch (AlignContent)
                 {
                     case AlignContent.Start:
-                        alignment = Alignment.Start;
+                        lineSize = line.Items.Max(item => item.RectTransform.rect.size[crossAxis]);
+                        offsetMultiplier = 0f;
                         break;
                     case AlignContent.Center:
-                        alignment = Alignment.Center;
+                        lineSize = line.Items.Max(item => item.RectTransform.rect.size[crossAxis]);
+                        offsetMultiplier = 0.5f;
                         break;
                     case AlignContent.End:
-                        alignment = Alignment.End;
+                        lineSize = line.Items.Max(item => item.RectTransform.rect.size[crossAxis]);
+                        offsetMultiplier = 1f;
                         break;
-                    default:
-                        alignment = Alignment.Start;
+                    case AlignContent.Stretch:
+                        lineSize = containerSize[crossAxis] / lines.Count;
                         break;
                 }
                 
-                AlignContentAlongAxis(crossAxis, containerSize, lines, alignment);
+                var size = line.Size;
+                size[crossAxis] = lineSize;
+                line.Size = size;
+                contentSize[crossAxis] += lineSize;
+                
+                positionPointer[crossAxis] += lineSize * i + (i > 0 ? Spacing : 0);
+                line.Position = positionPointer;
+            }
+
+            var offset = (containerSize[crossAxis] - contentSize[crossAxis]) * offsetMultiplier;
+            
+            foreach (var line in lines)
+            {
+                var position = line.Position;
+                position[crossAxis] += offset;
+                line.Position = position;
+            }
+        }
+
+        private void ApplyAlignItems(int crossAxis, List<Line> lines)
+        {
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i];
+                foreach (var item in line.Items)
+                {
+                    var size = item.RectTransform.sizeDelta;
+                    var offsetMultiplier = 0f;
+                    switch (AlignItems)
+                    {
+                        case AlignItems.Start:
+                            offsetMultiplier = 0f;
+                            break;
+                        case AlignItems.Center:
+                            offsetMultiplier = 0.5f;
+                            break;
+                        case AlignItems.End:
+                            offsetMultiplier = 1.0f;
+                            break;
+                        case AlignItems.Stretch:
+                            size[crossAxis] = line.Size[crossAxis] - (i > 0 ? Spacing : 0);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                    
+                    item.RectTransform.sizeDelta = size;
+                    var offset = (line.Size[crossAxis] - size[crossAxis]) * offsetMultiplier;
+                    var pivot = item.RectTransform.pivot;
+                    var anchoredPosition = item.RectTransform.anchoredPosition;
+                    anchoredPosition[crossAxis] = (line.Position[crossAxis] + size[crossAxis] * pivot[crossAxis]) * (crossAxis == 0 ? 1 : -1);
+                    anchoredPosition[crossAxis] -= offset * (crossAxis == 1 ? 1 : -1);
+                    item.RectTransform.anchoredPosition = anchoredPosition;
+                }
             }
         }
 
