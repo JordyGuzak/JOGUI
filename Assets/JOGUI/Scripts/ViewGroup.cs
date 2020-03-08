@@ -17,15 +17,7 @@ namespace JOGUI
 
         public override Dictionary<string, SharedElement> SharedElements 
         {
-            get
-            {
-                if (_activeView != null)
-                {
-                    return MergeSharedElements(base.SharedElements, _activeView.SharedElements);
-                }
-
-                return base.SharedElements;
-            }
+            get => _activeView != null ? MergeSharedElements(base.SharedElements, _activeView.SharedElements) : base.SharedElements;
             protected set => base.SharedElements = value; 
         }
 
@@ -56,11 +48,9 @@ namespace JOGUI
 
         public void RegisterView(View view)
         {
-            if (view != null && !_viewsDict.ContainsKey(view.GetType()))
-            {
-                _viewsDict.Add(view.GetType(), view);
-                view.Initialize(this);
-            }
+            if (view == null || _viewsDict.ContainsKey(view.GetType())) return;
+            _viewsDict.Add(view.GetType(), view);
+            view.Initialize(this);
         }
 
         public void ClearHistory()
@@ -111,11 +101,9 @@ namespace JOGUI
 
             if (_activeView == destination)
             {
-                if (!_activeView.gameObject.activeSelf)
-                {
-                    _activeView.transform.SetAsLastSibling();
-                    _activeView.OnEnter(bundle ?? new Dictionary<string, object>());
-                }
+                if (_activeView.gameObject.activeSelf) return;
+                _activeView.transform.SetAsLastSibling();
+                _activeView.OnEnter(bundle ?? new Dictionary<string, object>());
 
                 return;
             }
@@ -302,12 +290,6 @@ namespace JOGUI
             return a.Concat(b)
                 .GroupBy(p  => p.Key)
                 .ToDictionary(group => group.Key, group => group.First().Value);
-        }
-
-        private IEnumerator DelayedCall(Action action)
-        {
-            yield return new WaitForEndOfFrame();
-            action?.Invoke();
         }
     }
 }

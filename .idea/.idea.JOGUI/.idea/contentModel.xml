@@ -4,6 +4,7 @@
     <e p="C:\Users\Jordy\.Rider2019.3\system\extResources" t="IncludeRecursive" />
     <e p="C:\Users\Jordy\.Rider2019.3\system\resharper-host\local\Transient\ReSharperHost\v193\SolutionCaches\_JOGUI.-212068901.00" t="ExcludeRecursive" />
     <e p="C:\Users\Jordy\source\repos\JOGUI" t="IncludeRecursive">
+      <e p="Assembly-CSharp-Editor.csproj" t="IncludeRecursive" />
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
         <e p="JOGUI" t="Include">
@@ -33,8 +34,22 @@
             <e p="Components" t="Include">
               <e p="Adapter.cs" t="Include" />
             </e>
+            <e p="Elements" t="Include">
+              <e p="Editor" t="Include">
+                <e p="WebImageEditor.cs" t="Include" />
+                <e p="WebRawImageEditor.cs" t="Include" />
+              </e>
+              <e p="WebImage.cs" t="Include" />
+              <e p="WebRawImage.cs" t="Include" />
+            </e>
+            <e p="Extensions" t="Include">
+              <e p="ComponentExtensions.cs" t="Include" />
+            </e>
+            <e p="Layouts" t="Include">
+              <e p="FlexContainer.cs" t="Include" />
+              <e p="FlexElement.cs" t="Include" />
+            </e>
             <e p="SharedElement.cs" t="Include" />
-            <e p="TransitionManager.cs" t="Include" />
             <e p="Transitions" t="Include">
               <e p="Fade.cs" t="Include" />
               <e p="Interfaces" t="Include">

@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 
-[RequireComponent(typeof(CanvasGroup))]
 public class SharedElement : MonoBehaviour
 {
     private RectTransform _rectTransform;
