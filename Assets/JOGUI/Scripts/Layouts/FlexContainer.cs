@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using JOGUI.Extensions;
@@ -18,6 +19,21 @@ namespace JOGUI
     {
         Wrap,
         NoWrap
+    }
+    
+    public enum JustifyContent
+    {
+        Start,
+        Center,
+        End
+    }
+
+    public enum AlignContent
+    {
+        Start,
+        Center,
+        End,
+        Stretch
     }
 
     public enum Alignment
@@ -38,7 +54,7 @@ namespace JOGUI
             public Vector2 Size { get; set; }
             public Vector2 UsedSpace { get; set; }
 
-            public Vector2 Position { get; }
+            public Vector2 Position { get; set; }
             public int MainAxis { get; }
             public int CrossAxis { get; }
 
@@ -76,15 +92,15 @@ namespace JOGUI
             set => SetProperty(ref wrapMode, value);
         }
 
-        [SerializeField] protected Alignment justifyContent;
-        public Alignment JustifyContent
+        [SerializeField] protected JustifyContent justifyContent;
+        public JustifyContent JustifyContent
         {
             get => justifyContent;
             set => SetProperty(ref justifyContent, value);
         }
         
-        [SerializeField] protected Alignment alignContent;
-        public Alignment AlignContent
+        [SerializeField] protected AlignContent alignContent;
+        public AlignContent AlignContent
         {
             get => alignContent;
             set => SetProperty(ref alignContent, value);
@@ -229,7 +245,7 @@ namespace JOGUI
         private void AlignContentAlongAxis(int axis, Vector2 containerSize, List<Line> lines, Alignment alignment)
         {
             if (lines.Count == 0) return;
-
+            
             var isMainAxis = axis == lines[0].MainAxis;
             var max = 0f;
             if (isMainAxis)
@@ -241,7 +257,7 @@ namespace JOGUI
             {
                 max = lines.Sum(l => l.UsedSpace[axis]) + (lines.Count - 1) * Spacing;
             }
-            
+        
             float offset = 0;
             switch (alignment)
             {
@@ -270,12 +286,70 @@ namespace JOGUI
 
         private void ApplyJustifyContent(int mainAxis, Vector2 containerSize, List<Line> lines)
         {
-            AlignContentAlongAxis(mainAxis, containerSize, lines, JustifyContent);
+            Alignment alignment;
+            switch (JustifyContent)
+            {
+                case JustifyContent.Start:
+                    alignment = Alignment.Start;
+                    break;
+                case JustifyContent.Center:
+                    alignment = Alignment.Center;
+                    break;
+                case JustifyContent.End:
+                    alignment = Alignment.End;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            
+            AlignContentAlongAxis(mainAxis, containerSize, lines, alignment);
         }
         
         private void ApplyAlignContent(int crossAxis, Vector2 containerSize, List<Line> lines)
         {
-            AlignContentAlongAxis(crossAxis, containerSize, lines, AlignContent);
+            if (AlignContent == AlignContent.Stretch)
+            {
+                var lineSize = containerSize[crossAxis] / lines.Count;
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    var line = lines[i];
+                    var position = line.Position;
+                    position[crossAxis] = lineSize * i + (i > 0 ? Spacing : 0);
+                    foreach (var item in line.Items)
+                    {
+                        var size = item.RectTransform.sizeDelta;
+                        size[crossAxis] = lineSize - (i > 0 ? Spacing : 0);
+                        item.RectTransform.sizeDelta = size;
+                        
+                        var pivot = item.RectTransform.pivot;
+                        var anchoredPosition = item.RectTransform.anchoredPosition;
+                        anchoredPosition[crossAxis] = (position[crossAxis] + size[crossAxis] * pivot[crossAxis]) * (crossAxis == 0 ? 1 : -1);
+                        item.RectTransform.anchoredPosition = anchoredPosition;
+                        //item.RectTransform.anchoredPosition = new Vector2(position.x + size.x * pivot.x, position.y - size.y * (1f - pivot.y));
+                    }
+                }
+            }
+            else
+            {
+                Alignment alignment;
+                switch (AlignContent)
+                {
+                    case AlignContent.Start:
+                        alignment = Alignment.Start;
+                        break;
+                    case AlignContent.Center:
+                        alignment = Alignment.Center;
+                        break;
+                    case AlignContent.End:
+                        alignment = Alignment.End;
+                        break;
+                    default:
+                        alignment = Alignment.Start;
+                        break;
+                }
+                
+                AlignContentAlongAxis(crossAxis, containerSize, lines, alignment);
+            }
         }
 
         public void SetDirty()
