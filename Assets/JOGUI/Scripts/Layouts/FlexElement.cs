@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace JOGUI
 {
@@ -41,11 +42,16 @@ namespace JOGUI
             }
         }
 
-        private void Awake()
+        private void OnEnable()
         {
-            //FlexBasis = RectTransform.rect.size;
+            SetDirty();
         }
-        
+
+        private void OnDisable()
+        {
+            SetDirty();
+        }
+
         protected void SetProperty<T>(ref T currentValue, T newValue)
         {
             if ((currentValue == null && newValue == null) || (currentValue != null && currentValue.Equals(newValue)))

@@ -151,6 +151,8 @@ namespace JOGUI
 
         private void SetLayout()
         {
+            if (RectTransform.childCount == 0) return;
+            
             var container = RectTransform;
             var mainAxis = FlexDirection == FlexDirection.Row ? 0 : 1;
             var crossAxis = mainAxis == 0 ? 1 : 0;
@@ -160,7 +162,9 @@ namespace JOGUI
 
             for (var i = 0; i < container.childCount; i++)
             {
-                var element = GetOrAddFlexElement((RectTransform)container.GetChild(i));
+                var child = (RectTransform) container.GetChild(i);
+                if (!child.gameObject.activeInHierarchy) continue;
+                var element = GetOrAddFlexElement(child);
                 var elementRect = element.RectTransform;
                 elementRect.anchorMin = Vector2.up;
                 elementRect.anchorMax = Vector2.up;
@@ -195,8 +199,8 @@ namespace JOGUI
                 ApplyFlexGrow(mainAxis, line);
             }
 
-            ApplyAlignContent(crossAxis, container.rect.size, lines);
             ApplyJustifyContent(mainAxis, container.rect.size, lines);
+            ApplyAlignContent(crossAxis, container.rect.size, lines);
             ApplyAlignItems(crossAxis, lines);
             _isDirty = false;
         }
@@ -313,12 +317,12 @@ namespace JOGUI
                 size[crossAxis] = lineSize;
                 line.Size = size;
                 contentSize[crossAxis] += lineSize;
-                
-                positionPointer[crossAxis] += lineSize * i + (i > 0 ? Spacing : 0);
+
+                positionPointer[crossAxis] += i > 0 ? lines[i - 1].Size[crossAxis] + Spacing : 0;
                 line.Position = positionPointer;
             }
 
-            var offset = (containerSize[crossAxis] - contentSize[crossAxis]) * offsetMultiplier;
+            var offset = (containerSize[crossAxis] - (contentSize[crossAxis] + (lines.Count - 1) * Spacing)) * offsetMultiplier;
             
             foreach (var line in lines)
             {
@@ -349,7 +353,7 @@ namespace JOGUI
                             offsetMultiplier = 1.0f;
                             break;
                         case AlignItems.Stretch:
-                            size[crossAxis] = line.Size[crossAxis] - (i > 0 ? Spacing : 0);
+                            size[crossAxis] = line.Size[crossAxis];// - (i > 0 ? Spacing : 0);
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
@@ -358,9 +362,9 @@ namespace JOGUI
                     item.RectTransform.sizeDelta = size;
                     var offset = (line.Size[crossAxis] - size[crossAxis]) * offsetMultiplier;
                     var pivot = item.RectTransform.pivot;
+                    var pivotVal = crossAxis == 0 ? pivot[crossAxis] : (1f - pivot[crossAxis]);
                     var anchoredPosition = item.RectTransform.anchoredPosition;
-                    anchoredPosition[crossAxis] = (line.Position[crossAxis] + size[crossAxis] * pivot[crossAxis]) * (crossAxis == 0 ? 1 : -1);
-                    anchoredPosition[crossAxis] -= offset * (crossAxis == 1 ? 1 : -1);
+                    anchoredPosition[crossAxis] = (line.Position[crossAxis] + offset + size[crossAxis] * pivotVal) * (crossAxis == 0 ? 1 : -1);
                     item.RectTransform.anchoredPosition = anchoredPosition;
                 }
             }
@@ -371,7 +375,7 @@ namespace JOGUI
             _isDirty = true;
         }
         
-        protected void SetProperty<T>(ref T currentValue, T newValue)
+        private void SetProperty<T>(ref T currentValue, T newValue)
         {
             if ((currentValue == null && newValue == null) || (currentValue != null && currentValue.Equals(newValue))) return;
             currentValue = newValue;
@@ -386,7 +390,7 @@ namespace JOGUI
 
         protected virtual void OnTransformChildrenChanged()
         {
-            StartCoroutine(DelayedSetDirty());
+            SetDirty();
         }
 
 #if UNITY_EDITOR
@@ -400,11 +404,5 @@ namespace JOGUI
             SetDirty();
         }
 #endif
-        
-        IEnumerator DelayedSetDirty()
-        {
-            yield return null;
-            SetDirty();
-        }
     }
 }

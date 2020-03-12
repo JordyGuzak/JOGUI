@@ -17,7 +17,15 @@ namespace JOGUI
 
         public override Dictionary<string, SharedElement> SharedElements 
         {
-            get => _activeView != null ? MergeSharedElements(base.SharedElements, _activeView.SharedElements) : base.SharedElements;
+            get
+            {
+                if (_activeView != null)
+                {
+                    return MergeSharedElements(base.SharedElements, _activeView.SharedElements);
+                }
+
+                return base.SharedElements;
+            }
             protected set => base.SharedElements = value; 
         }
 
@@ -29,33 +37,40 @@ namespace JOGUI
         public override void OnEnter(Dictionary<string, object> bundle)
         {
             base.OnEnter(bundle);
-
-            if (_activeView != null)
-            {
-                _activeView.OnEnter(bundle);
-            }
+            if (_activeView != null) _activeView.OnEnter(bundle);
         }
 
         public override void OnExit()
         {
             base.OnExit();
-
-            if (_activeView != null)
-            {
-                _activeView.OnExit();
-            }
+            if (_activeView != null) _activeView.OnExit();
         }
 
         public void RegisterView(View view)
         {
-            if (view == null || _viewsDict.ContainsKey(view.GetType())) return;
-            _viewsDict.Add(view.GetType(), view);
-            view.Initialize(this);
+            if (view != null && !_viewsDict.ContainsKey(view.GetType()))
+            {
+                _viewsDict.Add(view.GetType(), view);
+                view.Initialize(this);
+            }
         }
 
         public void ClearHistory()
         {
             _history.Clear();
+        }
+
+        public void SetActiveView<T>() where T : View
+        {
+            if (!TryGetView(typeof(T), out View view)) return;
+            
+            if (_activeView != null)
+            {
+                _activeView.OnExitFinished();
+            }
+                
+            view.transform.SetAsLastSibling();
+            _activeView = view;
         }
 
         public void Navigate(View destination, Transition transition, Dictionary<string, object> bundle = null)
@@ -101,10 +116,8 @@ namespace JOGUI
 
             if (_activeView == destination)
             {
-                if (_activeView.gameObject.activeSelf) return;
                 _activeView.transform.SetAsLastSibling();
                 _activeView.OnEnter(bundle ?? new Dictionary<string, object>());
-
                 return;
             }
 
@@ -277,9 +290,9 @@ namespace JOGUI
 
         private void MoveSharedElementsToOriginalParent()
         {
-            var sharedElements = _viewOverlay.GetComponentsInChildren<SharedElement>(true);
-            foreach (var sharedElement in sharedElements)
+            for(var i = _viewOverlay.transform.childCount - 1; i >= 0 ; i--)
             {
+                var sharedElement = _viewOverlay.transform.GetChild(i).GetComponent<SharedElement>();
                 sharedElement.RectTransform.SetParent(sharedElement.OriginalParent, true);
                 sharedElement.RectTransform.SetSiblingIndex(sharedElement.OriginalSiblingIndex);
             }

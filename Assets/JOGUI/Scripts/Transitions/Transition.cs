@@ -1,13 +1,7 @@
-﻿using System.Linq;
-using System.Web;
-using UnityEngine;
-
-namespace JOGUI
+﻿namespace JOGUI
 {
     public abstract class Transition
     {
-        
-
         public delegate void TransitionCompleteHandler(Transition transition);
         public event TransitionCompleteHandler TransitionComplete;
 

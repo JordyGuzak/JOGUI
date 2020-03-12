@@ -73,9 +73,8 @@ namespace JOGUI
         {
             var camera = Camera.main;
             var canvas = rectTransform.GetComponentInParent<Canvas>().rootCanvas;
-
-            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rectTransform.position);
-            Vector2 targetPos = Vector2.zero;
+            var screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rectTransform.position);
+            var targetPos = Vector2.zero;
 
             switch (direction)
             {

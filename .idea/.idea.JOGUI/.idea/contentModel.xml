@@ -50,6 +50,7 @@
               <e p="FlexElement.cs" t="Include" />
             </e>
             <e p="SharedElement.cs" t="Include" />
+            <e p="TransitionManager.cs" t="Include" />
             <e p="Transitions" t="Include">
               <e p="Fade.cs" t="Include" />
               <e p="Interfaces" t="Include">

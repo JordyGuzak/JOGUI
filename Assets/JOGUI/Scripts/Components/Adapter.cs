@@ -1,23 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using JOGUI.Utils;
 using UnityEngine;
 
-namespace JOGUI.Components
+namespace JOGUI
 {
     public class Adapter<T1, T2> where T1 : Component //TODO add DataSource interface or base class?
     {
         public int Count => _data.Count;
         
         public System.Action<T1, T2> BindItem { get; set; }
+        public System.Action<T1> UnbindItem { get; set; }
 
         private List<T2> _data;
-        private Dictionary<int, T1> _activeElements;
+        public Dictionary<int, T1> ActiveItems { get; private set; }
         private ObjectPool<T1> _objectPool;
 
         public Adapter(T1 prefab, Transform parent)
         {
             _data = new List<T2>();
-            _activeElements = new Dictionary<int, T1>();
+            ActiveItems = new Dictionary<int, T1>();
             _objectPool = new ObjectPool<T1>(prefab, parent);
         }
 
@@ -25,7 +27,9 @@ namespace JOGUI.Components
         {
             var element = _objectPool.Rent();
             _data.Add(data);
-            _activeElements.Add(_data.Count - 1, element);
+            var index = _data.Count - 1;
+            ActiveItems.Add(index, element);
+            element.transform.SetSiblingIndex(index);
             BindItem?.Invoke(element, data);
         }
 
@@ -34,8 +38,9 @@ namespace JOGUI.Components
             var index = _data.IndexOf(data);
             if (index == -1) return;
             _data.RemoveAt(index);
-            var element = _activeElements[index];
-            _activeElements.Remove(index);
+            var element = ActiveItems[index];
+            UnbindItem?.Invoke(element);
+            ActiveItems.Remove(index);
             _objectPool.Return(element);
         }
 
@@ -53,11 +58,12 @@ namespace JOGUI.Components
         public void Clear()
         {
             _data.Clear();
-            foreach (var pair in _activeElements)
+            foreach (var pair in ActiveItems)
             {
+                UnbindItem?.Invoke(pair.Value);
                 _objectPool.Return(pair.Value);
             }
-            _activeElements.Clear();
+            ActiveItems.Clear();
         }
     }
 }

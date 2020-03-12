@@ -157,7 +157,7 @@ namespace JOGUI
             foreach (var destination in destinationElements.Values)
             {
                 if (!sourceElements.TryGetValue(destination.Key, out var source)) continue;
-                if (destination.RectTransform.position == source.RectTransform.position && destination.RectTransform.rect.size == source.RectTransform.rect.size) continue;
+                //if (destination.RectTransform.position == source.RectTransform.position && destination.RectTransform.rect.size == source.RectTransform.rect.size) continue;
                 sharedElementPairs.Add(new SharedElementPair {Source = source, Destination = destination});
             }
 
@@ -198,12 +198,14 @@ namespace JOGUI
 
             for (int i = 0; i < rectTransform.childCount; i++)
             {
-                if (rectTransform.GetChild(i).TryGetComponent(out View view))
+                var childRect = rectTransform.GetChild(i).GetComponent<RectTransform>();
+
+                if (!childRect || childRect.TryGetComponent(out View view))
                 {
                     continue;
                 }
 
-                sharedElements.AddRange(GetSharedElementsInChildren((RectTransform)rectTransform.GetChild(i)));
+                sharedElements.AddRange(GetSharedElementsInChildren(childRect));
             }
 
             return sharedElements.ToArray();

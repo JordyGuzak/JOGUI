@@ -11,7 +11,7 @@ namespace JOGUI
     
     public class SharedElementsTransition : Transition
     {
-        public override float TotalDuration => (_tweens == null || _tweens.Length == 0) ? 0 : base.TotalDuration;
+        public override float TotalDuration => _pairs.Count == 0 ? 0 : base.TotalDuration;
         
         private HashSet<SharedElementPair> _pairs = new HashSet<SharedElementPair>();
 
