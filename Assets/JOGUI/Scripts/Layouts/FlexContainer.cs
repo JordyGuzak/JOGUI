@@ -293,6 +293,7 @@ namespace JOGUI
             for (int i = 0; i < lines.Count; i++)
             {
                 var line = lines[i];
+                if (line.Items.Count == 0) continue;
                 var lineSize = 0f;
                 switch (AlignContent)
                 {
