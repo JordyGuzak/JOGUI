@@ -44,13 +44,6 @@ namespace JOGUI
         Stretch
     }
 
-    public enum Alignment
-    {
-        Start,
-        Center,
-        End
-    }
-
     [DisallowMultipleComponent]
     [ExecuteAlways]
     [RequireComponent(typeof(RectTransform))]
@@ -183,7 +176,7 @@ namespace JOGUI
                 elementRect.anchoredPosition = new Vector2(positionPointer.x + elementSize.x * pivot.x, positionPointer.y - elementSize.y * (1f - pivot.y));
 
                 // move position pointer
-                positionPointer[mainAxis] += (elementSize[mainAxis] + Spacing) * (FlexDirection == FlexDirection.Row ? 1 : -1);
+                positionPointer[mainAxis] += (elementSize[mainAxis] + Spacing) * (mainAxis == 0 ? 1 : -1);
                 currentLine.Add(element);
             }
 
@@ -219,21 +212,18 @@ namespace JOGUI
 
         private void ApplyFlexGrow(int mainAxis, Line line)
         {
+            var itemsWithGrow = line.Items.Where(i => i.FlexGrow > 0).ToArray();
+            if (itemsWithGrow.Length == 0) return;
             var spacing = (line.Items.Count - 1) * Spacing;
             var availableSpace = line.Size[mainAxis] - line.UsedSpace[mainAxis] - spacing;
             if (availableSpace < 0.05f) return;
-            var itemsWithGrow = line.Items.Where(i => i.FlexGrow > 0).ToArray();
-            if (itemsWithGrow.Length == 0) return;
             var sections = itemsWithGrow.Sum(i => i.FlexGrow);
             var spacePerSection = availableSpace / sections;
 
             foreach (var item in itemsWithGrow)
             {
-                if (item.FlexGrow <= 0) continue;
-                
-                var delta = spacePerSection * item.FlexGrow;
                 var size = item.FlexBasis;
-                size[mainAxis] += delta;
+                size[mainAxis] += spacePerSection * item.FlexGrow;
                 item.RectTransform.sizeDelta = size;
             }
 
@@ -244,12 +234,12 @@ namespace JOGUI
                 var elementSize = itemRect.rect.size;
                 var pivot = itemRect.pivot;
                 itemRect.anchoredPosition = new Vector2(positionPointer.x + elementSize.x * pivot.x, positionPointer.y - elementSize.y * (1f - pivot.y));
-                positionPointer[mainAxis] += (elementSize[mainAxis] + Spacing) * (FlexDirection == FlexDirection.Row ? 1 : -1);
+                positionPointer[mainAxis] += (elementSize[mainAxis] + Spacing) * (mainAxis == 0 ? 1 : -1);
             }
 
-            var lineSize = line.Size;
-            lineSize[mainAxis] -= spacing;
-            line.UsedSpace = lineSize;
+            var usedSpace = line.UsedSpace;
+            usedSpace[mainAxis] = line.Size[mainAxis] - spacing;
+            line.UsedSpace = usedSpace;
         }
 
         private void ApplyJustifyContent(int mainAxis, Vector2 containerSize, List<Line> lines)
@@ -298,19 +288,19 @@ namespace JOGUI
                 switch (AlignContent)
                 {
                     case AlignContent.Start:
-                        lineSize = line.Items.Max(item => item.RectTransform.rect.size[crossAxis]);
+                        lineSize = line.UsedSpace[crossAxis];
                         offsetMultiplier = 0f;
                         break;
                     case AlignContent.Center:
-                        lineSize = line.Items.Max(item => item.RectTransform.rect.size[crossAxis]);
+                        lineSize = line.UsedSpace[crossAxis];
                         offsetMultiplier = 0.5f;
                         break;
                     case AlignContent.End:
-                        lineSize = line.Items.Max(item => item.RectTransform.rect.size[crossAxis]);
+                        lineSize = line.UsedSpace[crossAxis];
                         offsetMultiplier = 1f;
                         break;
                     case AlignContent.Stretch:
-                        lineSize = containerSize[crossAxis] / lines.Count;
+                        lineSize = containerSize[crossAxis] / lines.Count - (lines.Count - 1) * Spacing / lines.Count;
                         break;
                 }
                 
