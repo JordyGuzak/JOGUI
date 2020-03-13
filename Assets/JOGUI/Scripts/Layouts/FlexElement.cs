@@ -8,14 +8,6 @@ namespace JOGUI
     [RequireComponent(typeof(RectTransform))]
     public class FlexElement : MonoBehaviour
     {
-        [SerializeField] private Vector2 _flexBasis;
-
-        public Vector2 FlexBasis
-        {
-            get => _flexBasis;
-            set => SetProperty(ref _flexBasis, value);
-        }
-
         [SerializeField] private float _flexGrow;
         public float FlexGrow
         {
@@ -28,6 +20,13 @@ namespace JOGUI
         {
             get => _flexShrink;
             set => SetProperty(ref _flexShrink, value);
+        }
+
+        [SerializeField] private Vector2 _flexBasis;
+        public Vector2 FlexBasis
+        {
+            get => _flexBasis;
+            set => SetProperty(ref _flexBasis, value);
         }
 
         private RectTransform _rectTransform;

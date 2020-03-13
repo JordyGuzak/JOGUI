@@ -122,6 +122,20 @@ namespace JOGUI
             set => SetProperty(ref _spacing, value);
         }
 
+        [SerializeField] protected bool _fitHorizontally;
+        public bool FitHorizontally
+        {
+            get => _fitHorizontally;
+            set => SetProperty(ref _fitHorizontally, value);
+        }
+        
+        [SerializeField] protected bool _fitVertically;
+        public bool FitVertically
+        {
+            get => _fitVertically;
+            set => SetProperty(ref _fitVertically, value);
+        }
+
         private RectTransform _rectTransform;
         private RectTransform RectTransform
         {
@@ -195,6 +209,8 @@ namespace JOGUI
             ApplyJustifyContent(mainAxis, container.rect.size, lines);
             ApplyAlignContent(crossAxis, container.rect.size, lines);
             ApplyAlignItems(crossAxis, lines);
+            if(FitHorizontally) ApplyFitContent(0, container, lines);
+            if(FitVertically) ApplyFitContent(1, container, lines);
             _isDirty = false;
         }
         
@@ -359,6 +375,14 @@ namespace JOGUI
                     item.RectTransform.anchoredPosition = anchoredPosition;
                 }
             }
+        }
+
+        private void ApplyFitContent(int axis, RectTransform container, List<Line> lines)
+        {
+            var requiredSize = axis == lines[0].MainAxis 
+                ? lines.Max(l => l.UsedSpace[axis] + (l.Items.Count - 1) * Spacing) 
+                : lines.Sum(l => l.UsedSpace[axis]) + (lines.Count - 1) * Spacing;
+            container.SetSizeWithCurrentAnchors(axis == 0 ? RectTransform.Axis.Horizontal : RectTransform.Axis.Vertical, requiredSize);
         }
 
         public void SetDirty()
