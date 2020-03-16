@@ -80,39 +80,39 @@ namespace JOGUI
             }
         }
         
-        [SerializeField] protected FlexDirection flexDirection;
+        [SerializeField] protected FlexDirection _flexDirection;
         public FlexDirection FlexDirection
         {
-            get => flexDirection;
-            set => SetProperty(ref flexDirection, value);
+            get => _flexDirection;
+            set => SetProperty(ref _flexDirection, value);
         }
 
-        [SerializeField] protected WrapMode wrapMode;
+        [SerializeField] protected WrapMode _wrapMode;
         public WrapMode WrapMode
         {
-            get => wrapMode;
-            set => SetProperty(ref wrapMode, value);
+            get => _wrapMode;
+            set => SetProperty(ref _wrapMode, value);
         }
 
-        [SerializeField] protected JustifyContent justifyContent;
+        [SerializeField] protected JustifyContent _justifyContent;
         public JustifyContent JustifyContent
         {
-            get => justifyContent;
-            set => SetProperty(ref justifyContent, value);
+            get => _justifyContent;
+            set => SetProperty(ref _justifyContent, value);
         }
         
-        [SerializeField] protected AlignContent alignContent;
+        [SerializeField] protected AlignContent _alignContent;
         public AlignContent AlignContent
         {
-            get => alignContent;
-            set => SetProperty(ref alignContent, value);
+            get => _alignContent;
+            set => SetProperty(ref _alignContent, value);
         }
         
-        [SerializeField] protected AlignItems alignItems;
+        [SerializeField] protected AlignItems _alignItems;
         public AlignItems AlignItems
         {
-            get => alignItems;
-            set => SetProperty(ref alignItems, value);
+            get => _alignItems;
+            set => SetProperty(ref _alignItems, value);
         }
 
         [SerializeField] protected float _spacing;
@@ -122,18 +122,18 @@ namespace JOGUI
             set => SetProperty(ref _spacing, value);
         }
 
-        [SerializeField] protected bool _fitHorizontally;
-        public bool FitHorizontally
+        [SerializeField] protected bool _fitContentHorizontally;
+        public bool FitContentHorizontally
         {
-            get => _fitHorizontally;
-            set => SetProperty(ref _fitHorizontally, value);
+            get => _fitContentHorizontally;
+            set => SetProperty(ref _fitContentHorizontally, value);
         }
         
-        [SerializeField] protected bool _fitVertically;
-        public bool FitVertically
+        [SerializeField] protected bool _fitContentVertically;
+        public bool FitContentVertically
         {
-            get => _fitVertically;
-            set => SetProperty(ref _fitVertically, value);
+            get => _fitContentVertically;
+            set => SetProperty(ref _fitContentVertically, value);
         }
 
         private RectTransform _rectTransform;
@@ -209,8 +209,8 @@ namespace JOGUI
             ApplyJustifyContent(mainAxis, container.rect.size, lines);
             ApplyAlignContent(crossAxis, container.rect.size, lines);
             ApplyAlignItems(crossAxis, lines);
-            if(FitHorizontally) ApplyFitContent(0, container, lines);
-            if(FitVertically) ApplyFitContent(1, container, lines);
+            if(FitContentHorizontally) ApplyFitContent(0, container, lines);
+            if(FitContentVertically) ApplyFitContent(1, container, lines);
             _isDirty = false;
         }
         
