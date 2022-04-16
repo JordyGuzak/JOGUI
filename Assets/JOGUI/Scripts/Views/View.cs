@@ -9,10 +9,6 @@ namespace JOGUI
     [RequireComponent(typeof(CanvasGroup))]
     public abstract class View : MonoBehaviour, IFadeTarget, ISlideTarget, IScaleTarget, ISizeTarget
     {
-        public event Action Entered;
-        public event Action ReEntered;
-        public event Action Exit;
-        
         private RectTransform _rectTransform;
         public RectTransform RectTransform
         {
@@ -64,9 +60,12 @@ namespace JOGUI
             Bundle = bundle ?? new Dictionary<string, object>();
             gameObject.SetActive(true);
             CanvasGroup.alpha = 1f;
-            Entered?.Invoke();
         }
 
+        
+        /// <summary>
+        /// Lifecycle method that gets called by the ViewGroup when navigating back to this View.
+        /// </summary>
         public virtual void OnReEnter()
         {
             if (!gameObject.activeSelf)
@@ -74,8 +73,6 @@ namespace JOGUI
             
             if (CanvasGroup.alpha < 1)
                 CanvasGroup.alpha = 1f;
-            
-            ReEntered?.Invoke();
         }
 
         /// <summary>
@@ -83,7 +80,6 @@ namespace JOGUI
         /// </summary>
         public virtual void OnExit()
         {
-            Exit?.Invoke();
         }
 
         /// <summary>
@@ -124,7 +120,7 @@ namespace JOGUI
         }
 
         /// <summary>
-        /// The transition that is run when returning to an exitted View.
+        /// The transition that is run when returning to an exited View.
         /// By default this plays the enter transition in reverse.
         /// </summary>
         /// <returns></returns>
@@ -187,6 +183,13 @@ namespace JOGUI
             return sharedElementPairs;
         }
         
+        /// <summary>
+        /// Attempts to find and return parameter in bundle with given key.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="param"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         protected bool TryGetParameter<T>(string key, out T param)
         {
             param = default;

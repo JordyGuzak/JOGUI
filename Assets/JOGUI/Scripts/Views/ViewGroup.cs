@@ -16,17 +16,18 @@ namespace JOGUI
         [SerializeField] private RectTransform _viewsContainer;
 
         public RectTransform ViewsContainer => _viewsContainer;
-        public int HistoryCount => _history.Count;
+        public int HistoryCount => History.Count;
         public View ActiveView => _activeView;
 
         protected virtual bool SetFirstChildActiveOnInit => true;
-        protected readonly List<View> _views = new List<View>();
-        protected readonly Stack<View> _history = new Stack<View>();
-        protected View _activeView;
+        protected readonly List<View> Views = new List<View>();
+        protected readonly Stack<View> History = new Stack<View>();
+        
+        private View _activeView;
         private Canvas _viewOverlay;
         private GameObject _blocker;
-        private bool _isInitialized;
         private Transition _transition;
+        private bool _isInitialized;
 
         public override Dictionary<string, SharedElement> SharedElements
         {
@@ -44,7 +45,6 @@ namespace JOGUI
         public override void OnEnter(Dictionary<string, object> bundle)
         {
             base.OnEnter(bundle);
-
             if (_activeView != null)
                 _activeView.OnEnter(bundle);
         }
@@ -52,13 +52,15 @@ namespace JOGUI
         public override void OnReEnter()
         {
             base.OnReEnter();
-            if (_activeView != null) _activeView.OnReEnter();
+            if (_activeView != null) 
+                _activeView.OnReEnter();
         }
 
         public override void OnExit()
         {
             base.OnExit();
-            if (_activeView != null) _activeView.OnExit();
+            if (_activeView != null) 
+                _activeView.OnExit();
         }
 
         public void RegisterView(View view)
@@ -66,37 +68,32 @@ namespace JOGUI
             if (view == null)
                 return;
 
-            _views.Add(view);
+            Views.Add(view);
             view.Initialize(this);
         }
 
         public void UnregisterView(View view)
         {
-            _views.Remove(view);
+            Views.Remove(view);
         }
 
         public void ClearHistory()
         {
-            _history.Clear();
+            History.Clear();
         }
 
         public void RemoveLastViewFromHistory()
         {
-            if (_history.Count == 0)
+            if (History.Count == 0)
                 return;
 
-            _history.Pop();
-        }
-
-        public View GetActiveView()
-        {
-            return _activeView;
+            History.Pop();
         }
 
         public void SetActiveView<T>() where T : View
         {
-            TryGetView(typeof(T), out View view);
-            SetActiveView(view);
+            if (TryGetView<T>(out var view))
+                SetActiveView(view);
         }
 
         public void SetActiveView(View view)
@@ -166,12 +163,15 @@ namespace JOGUI
             _transition.Run();
         }
 
+        /// <summary>
+        /// Return to previous View.
+        /// </summary>
         public virtual void Back()
         {
-            if (_history.Count == 0) return;
+            if (History.Count == 0) return;
 
             var source = _activeView;
-            var destination = _history.Pop();
+            var destination = History.Pop();
 
             _transition.SafeSkip();
 
@@ -200,10 +200,28 @@ namespace JOGUI
             _activeView = destination;
             _transition.Run();
         }
+        
+        /// <summary>
+        /// Returns registered View of given type.
+        /// </summary>
+        /// <param name="view"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public bool TryGetView<T>(out T view) where T : View
+        {
+            return TryGetView(typeof(T), out view);
+        }
 
+        /// <summary>
+        /// Returns registered View of given Type.
+        /// </summary>
+        /// <param name="viewType"></param>
+        /// <param name="view"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public bool TryGetView<T>(Type viewType, out T view) where T : View
         {
-            View viewResult = _views.FirstOrDefault(v => v.GetType() == viewType);
+            View viewResult = Views.FirstOrDefault(v => v.GetType() == viewType);
             if (viewType != null && viewResult != null)
             {
                 if (viewResult is T parsedView)
@@ -216,24 +234,7 @@ namespace JOGUI
             view = default;
             return false;
         }
-
-        public bool TryGetView<T>(out T view) where T : View
-        {
-            View viewResult = _views.FirstOrDefault(v => v.GetType() == typeof(T));
-
-            if (viewResult != null)
-            {
-                if (viewResult is T parsedView)
-                {
-                    view = parsedView;
-                    return true;
-                }
-            }
-
-            view = default;
-            return false;
-        }
-
+        
         protected void Initialize()
         {
             if (_viewsContainer == null)
@@ -257,7 +258,7 @@ namespace JOGUI
                 if (view)
                 {
                     view.Initialize(this);
-                    _views.Add(view);
+                    Views.Add(view);
 
                     view.gameObject.SetActive(first);
 
@@ -289,7 +290,6 @@ namespace JOGUI
         private GameObject CreateBlocker()
         {
             var blocker = new GameObject("Blocker", typeof(RectTransform), typeof(Image));
-
             var rectTransform = (RectTransform) blocker.transform;
             rectTransform.transform.SetParent(_viewsContainer ? _viewsContainer : transform, false);
             rectTransform.anchorMax = Vector2.one;
@@ -378,7 +378,7 @@ namespace JOGUI
             if (source)
             {
                 source.OnExit();
-                _history.Push(source);
+                History.Push(source);
             }
 
             destination.OnEnter(bundle ?? new Dictionary<string, object>());
