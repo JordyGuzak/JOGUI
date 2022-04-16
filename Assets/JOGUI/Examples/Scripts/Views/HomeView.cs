@@ -8,34 +8,23 @@ namespace JOGUI.Examples
         [SerializeField] private Blocker _blocker;
 
         private Transition _enterTransition;
-        private Transition _exitTransition;
         private Transition _drawerTransition;
 
         public override void Initialize(ViewGroup viewGroup)
         {
             base.Initialize(viewGroup);
 
-            _drawerTransition = new TransitionSet(TransitionMode.PARALLEL)
+            _drawerTransition = new TransitionSet()
                 .Add(new Slide(_drawer.anchoredPosition, SlideMode.IN, Direction.RIGHT)
                     .AddTarget(_drawer)
                     .SetEaseType(EaseType.EaseInOutCubic))
                 .Add(new Fade(0, 0.66f)
                     .AddTarget(_blocker)
                     .SetEaseType(EaseType.EaseInOutCubic));
-
-            _enterTransition = new Slide(RectTransform.anchoredPosition, SlideMode.IN, Direction.RIGHT).AddTarget(RectTransform);
-            _exitTransition = new Fade(1, 0).AddTarget(this);
         }
 
-        public override Transition GetEnterTransition()
-        {
-            return _enterTransition;
-        }
-
-        public override Transition GetExitTransition()
-        {
-            return _exitTransition;
-        }
+        public override Transition GetEnterTransition() => new Slide(Vector2.zero, SlideMode.IN, Direction.RIGHT).AddTarget(RectTransform);
+        public override Transition GetExitTransition() => new Fade(1, 0).AddTarget(this);
 
         public void GoToProfile()
         {
@@ -46,19 +35,14 @@ namespace JOGUI.Examples
         {
             _drawer.gameObject.SetActive(true);
             _blocker.gameObject.SetActive(true);
-
             _drawerTransition
-                .SetOnComplete(() =>
-                {
-                    _blocker.onPointerClick.AddListener(CloseDrawerMenu);
-                })
+                .SetOnComplete(() => _blocker.onPointerClick.AddListener(CloseDrawerMenu))
                 .Run();
         }
 
-        public void CloseDrawerMenu()
+        private void CloseDrawerMenu()
         {
             _blocker.onPointerClick.RemoveListener(CloseDrawerMenu);
-
             _drawerTransition
                 .Reversed()
                 .SetOnComplete(() =>

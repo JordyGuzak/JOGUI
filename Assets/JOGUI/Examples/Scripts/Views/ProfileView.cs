@@ -8,7 +8,6 @@ namespace JOGUI.Examples
         [SerializeField] private TMP_Text _descriptionText;
 
         private Transition _enterTransition;
-        private Transition _exitTransition;
 
         public override void Initialize(ViewGroup viewGroup)
         {
@@ -25,24 +24,10 @@ namespace JOGUI.Examples
                         .SetStartDelay(0.1f))
                     .Add(new Fade(0, 1)
                         .AddTarget(new GraphicFadeTarget(_descriptionText))));
-
-            _exitTransition = new Slide(RectTransform.anchoredPosition, SlideMode.OUT, Direction.UP).AddTarget(RectTransform);
         }
 
-        public override Transition GetEnterTransition()
-        {
-            return _enterTransition;
-        }
-
-        public override Transition GetExitTransition()
-        {
-            return _exitTransition;
-        }
-
-        public new void GoBack()
-        {
-            ViewGroup.Back();
-        }
+        public override Transition GetEnterTransition() => _enterTransition;
+        public override Transition GetExitTransition() => new Slide(Vector2.zero, SlideMode.OUT, Direction.UP).AddTarget(RectTransform);
 
         public void GoToSettings()
         {
