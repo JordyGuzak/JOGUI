@@ -39,7 +39,7 @@ namespace JOGUI.Examples
             return _exitTransition;
         }
 
-        public void GoBack()
+        public new void GoBack()
         {
             ViewGroup.Back();
         }

@@ -4,12 +4,14 @@ namespace JOGUI
 {
     public class Vector2Evaluator : IEvaluateType<Vector2>
     {
-        public Vector2 Evaluate(EaseType easeType, Vector2 startValue, Vector2 endValue, float t)
+        public Vector2 GetChangeValue(Vector2 startValue, Vector2 endValue)
         {
-            Vector2 result = Vector2.zero;
-            result.x = Ease.Evaluate(easeType, startValue.x, endValue.x, t);
-            result.y = Ease.Evaluate(easeType, startValue.y, endValue.y, t);
-            return result;
+            return endValue - startValue;
+        }
+
+        public Vector2 Evaluate(Vector2 startValue, Vector2 changeValue, float t)
+        {
+            return startValue + changeValue * t;
         }
     }
 }

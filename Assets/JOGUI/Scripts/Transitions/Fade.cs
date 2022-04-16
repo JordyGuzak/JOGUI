@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace JOGUI
 {
@@ -15,17 +16,20 @@ namespace JOGUI
             _endAlpha = Mathf.Clamp01(endAlpha);
         }
 
-        protected override ITween[] CreateAnimators()
+        public override Tween[] CreateAnimators()
         {
-            var tweens = new ITween[_targets.Count];
+            var tweens = new Tween[_targets.Count];
 
             for (int i = 0; i < _targets.Count; i++)
             {
+                var target = _targets[i];
                 tweens[i] = new UITween<float>(_startAlpha, _endAlpha)
+                    .SetOnUpdate(target.SetAlpha)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(_targets[i].SetAlpha);
+                    .SetOverShoot(OverShoot)
+                    .SetLink(target.GetOnDestroyLink());
             }
 
             return tweens;
@@ -40,11 +44,9 @@ namespace JOGUI
                 reversed.AddTarget(target);
             }
 
-            return reversed.SetStartDelay(StartDelay)
-                .SetDuration(Duration)
-                .SetEaseType(EaseType)
-                .SetOnStart(_onStartCallback)
-                .SetOnComplete(_onCompleteCallback);
+            return reversed.SetOptions(Options)
+                .SetOnStart(OnStartCallback)
+                .SetOnComplete(OnCompleteCallback);
         }
 
         public Fade AddTarget(IFadeTarget target)
@@ -54,6 +56,18 @@ namespace JOGUI
 
             _targets.Add(target);
             return this;
+        }
+
+        public Fade AddTarget(Graphic target)
+        {
+            if (target == null) return this;
+            return AddTarget(new GraphicFadeTarget(target));
+        }
+
+        public Fade AddTarget(CanvasGroup target)
+        {
+            if (target == null) return this;
+            return AddTarget(new CanvasGroupFadeTarget(target));
         }
     }
 }

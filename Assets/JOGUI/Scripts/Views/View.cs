@@ -1,11 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using JOGUI.Extensions;
+using Object = UnityEngine.Object;
 
 namespace JOGUI
 {
     [RequireComponent(typeof(CanvasGroup))]
     public abstract class View : MonoBehaviour, IFadeTarget, ISlideTarget, IScaleTarget, ISizeTarget
     {
+        public event Action Entered;
+        public event Action ReEntered;
+        public event Action Exit;
+        
         private RectTransform _rectTransform;
         public RectTransform RectTransform
         {
@@ -24,7 +31,7 @@ namespace JOGUI
             get
             {
                 if (_canvasGroup == null)
-                    _canvasGroup = GetComponent<CanvasGroup>();
+                    _canvasGroup = this.GetOrAddComponent<CanvasGroup>();
 
                 return _canvasGroup;
             }
@@ -32,7 +39,7 @@ namespace JOGUI
 
         public virtual Dictionary<string, SharedElement> SharedElements { get; protected set; }
 
-        public Dictionary<string, object> Bundle { get; private set; }
+        public Dictionary<string, object> Bundle { get; protected set; }
 
         public ViewGroup ViewGroup { get; private set; }
 
@@ -54,9 +61,21 @@ namespace JOGUI
         /// <param name="data"></param>
         public virtual void OnEnter(Dictionary<string, object> bundle)
         {
+            Bundle = bundle ?? new Dictionary<string, object>();
             gameObject.SetActive(true);
-            Bundle = bundle;
             CanvasGroup.alpha = 1f;
+            Entered?.Invoke();
+        }
+
+        public virtual void OnReEnter()
+        {
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
+            
+            if (CanvasGroup.alpha < 1)
+                CanvasGroup.alpha = 1f;
+            
+            ReEntered?.Invoke();
         }
 
         /// <summary>
@@ -64,6 +83,7 @@ namespace JOGUI
         /// </summary>
         public virtual void OnExit()
         {
+            Exit?.Invoke();
         }
 
         /// <summary>
@@ -115,17 +135,21 @@ namespace JOGUI
 
         public void GoBack()
         {
-            ViewGroup.Back();
+            if(ViewGroup!= null)
+                ViewGroup.Back();
         }
 
         /// <summary>
         /// Sets the alpha property of the CanvasGroup on this GameObject
         /// </summary>
         /// <param name="alpha"></param>
-        public void SetAlpha(float alpha)
-        {
-            CanvasGroup.alpha = alpha;
-        }
+        public void SetAlpha(float alpha) => CanvasGroup.alpha = alpha;
+
+        /// <summary>
+        /// Gets the on destroy link for the fade tween
+        /// </summary>
+        /// <returns>UnityEngine.Object</returns>
+        public Object GetOnDestroyLink() => this;
 
         /// <summary>
         /// Sets the scale of this GameObject
@@ -144,7 +168,7 @@ namespace JOGUI
         {
             RectTransform.sizeDelta = size;
         }
-        
+
         /// <summary>
         /// Finds and creates set of shared element pairs between two collections of shared elements.
         /// </summary>
@@ -157,11 +181,29 @@ namespace JOGUI
             foreach (var destination in destinationElements.Values)
             {
                 if (!sourceElements.TryGetValue(destination.Key, out var source)) continue;
-                //if (destination.RectTransform.position == source.RectTransform.position && destination.RectTransform.rect.size == source.RectTransform.rect.size) continue;
                 sharedElementPairs.Add(new SharedElementPair {Source = source, Destination = destination});
             }
 
             return sharedElementPairs;
+        }
+        
+        protected bool TryGetParameter<T>(string key, out T param)
+        {
+            param = default;
+            if (Bundle != null && Bundle.TryGetValue(key, out var paramObj))
+            {
+                try
+                {
+                    param = (T)paramObj;
+                    return true;
+                }
+                catch (InvalidCastException ex)
+                {
+                    Debug.LogError(ex.Message);
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

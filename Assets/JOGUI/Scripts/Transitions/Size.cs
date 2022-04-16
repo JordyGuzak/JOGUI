@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace JOGUI
@@ -8,28 +9,41 @@ namespace JOGUI
         private Vector2 _startSize;
         private Vector2 _endSize;
         private List<RectTransform> _targets = new List<RectTransform>();
-
+        private Action<Vector2> _onUpdate;
+        
         public Size(Vector2 startSize, Vector2 endSize)
         {
             _startSize = startSize;
             _endSize = endSize;
         }
 
-        protected override ITween[] CreateAnimators()
+        public override Tween[] CreateAnimators()
         {
-            var tweens = new ITween[_targets.Count];
+            var tweens = new Tween[_targets.Count];
 
             for (int i = 0; i < _targets.Count; i++)
             {
                 var target = _targets[i];
                 tweens[i] = new UITween<Vector2>(_startSize, _endSize)
+                    .SetOnUpdate(value =>
+                    {
+                        target.sizeDelta = value;
+                        _onUpdate?.Invoke(value);
+                    })
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(value => target.sizeDelta = value);
+                    .SetOverShoot(OverShoot)
+                    .SetLink(target);
             }
 
             return tweens;
+        }
+
+        public virtual Size SetOnUpdate(Action<Vector2> onUpdate)
+        {
+            _onUpdate = onUpdate;
+            return this;
         }
 
         public override Transition Reversed()
@@ -41,11 +55,9 @@ namespace JOGUI
                 reversed.AddTarget(target);
             }
 
-            return reversed.SetStartDelay(StartDelay)
-                .SetDuration(Duration)
-                .SetEaseType(EaseType)
-                .SetOnStart(_onStartCallback)
-                .SetOnComplete(_onCompleteCallback);
+            return reversed.SetOptions(Options)
+                .SetOnStart(OnStartCallback)
+                .SetOnComplete(OnCompleteCallback);
         }
 
         public Size AddTarget(RectTransform target)

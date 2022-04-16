@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using JOGUI.Utils;
 using UnityEngine;
 
@@ -7,37 +7,39 @@ namespace JOGUI
 {
     public class Adapter<T1, T2> where T1 : Component //TODO add DataSource interface or base class?
     {
-        public int Count => _data.Count;
-        
-        public System.Action<T1, T2> BindItem { get; set; }
-        public System.Action<T1> UnbindItem { get; set; }
+        public delegate void BindItemAction(T1 item, T2 data, int index);
+        public delegate void UnbindItemAction(T1 item);
 
-        private List<T2> _data;
+        public int Count => Data.Count;
+        public BindItemAction BindItem { get; set; }
+        public UnbindItemAction UnbindItem { get; set; }
         public Dictionary<int, T1> ActiveItems { get; private set; }
+
+        public List<T2> Data { get; private set; }
         private ObjectPool<T1> _objectPool;
 
         public Adapter(T1 prefab, Transform parent)
         {
-            _data = new List<T2>();
+            Data = new List<T2>();
             ActiveItems = new Dictionary<int, T1>();
             _objectPool = new ObjectPool<T1>(prefab, parent);
         }
 
-        public void Add(T2 data)
+        public virtual void Add(T2 data)
         {
             var element = _objectPool.Rent();
-            _data.Add(data);
-            var index = _data.Count - 1;
+            Data.Add(data);
+            var index = Data.Count - 1;
             ActiveItems.Add(index, element);
             element.transform.SetSiblingIndex(index);
-            BindItem?.Invoke(element, data);
+            BindItem?.Invoke(element, data, index);
         }
 
-        public void Remove(T2 data)
+        public virtual void Remove(T2 data)
         {
-            var index = _data.IndexOf(data);
+            var index = Data.IndexOf(data);
             if (index == -1) return;
-            _data.RemoveAt(index);
+            Data.RemoveAt(index);
             var element = ActiveItems[index];
             UnbindItem?.Invoke(element);
             ActiveItems.Remove(index);
@@ -46,18 +48,31 @@ namespace JOGUI
 
         public void SetData(IEnumerable<T2> data)
         {
-            if (_data.Count > 0)
-                Clear();
-
-            foreach (var d in data)
+            var d = data.ToList();
+            
+            for (int i = Data.Count - 1; i > 0 && i > d.Count - 1; i--)
             {
-                Add(d);
+                Remove(Data[i]);
+            }
+            
+            for (int i = 0; i < d.Count; i++)
+            {
+                if (ActiveItems.TryGetValue(i, out var item))
+                {
+                    Data[i] = d[i];
+                    UnbindItem?.Invoke(item);
+                    BindItem?.Invoke(item, d[i], i);
+                }
+                else
+                {
+                    Add(d[i]);
+                }
             }
         }
 
-        public void Clear()
+        public virtual void Clear()
         {
-            _data.Clear();
+            Data.Clear();
             foreach (var pair in ActiveItems)
             {
                 UnbindItem?.Invoke(pair.Value);

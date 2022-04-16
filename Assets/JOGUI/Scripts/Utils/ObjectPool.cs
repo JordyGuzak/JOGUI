@@ -18,7 +18,7 @@ namespace JOGUI.Utils
 
         public T Rent()
         {
-            var obj = _stack.Count > 0 ? _stack.Pop() : Object.Instantiate<T>(_prefab, _parent);
+            var obj = _stack.Count > 0 ? _stack.Pop() : UnityEngine.Object.Instantiate<T>(_prefab, _parent);
             BeforeRent(obj);
             return obj;
         }

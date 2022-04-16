@@ -17,6 +17,8 @@ namespace JOGUI.Examples
             blockerImage.color = color;
         }
 
+        public Object GetOnDestroyLink() => this;
+
         public void OnPointerClick(PointerEventData eventData)
         {
             onPointerClick?.Invoke();

@@ -1,21 +1,14 @@
 ﻿using UnityEngine;
 
-public class SharedElement : MonoBehaviour
+namespace JOGUI
 {
-    private RectTransform _rectTransform;
-    public RectTransform RectTransform
+    public class SharedElement : MonoBehaviour
     {
-        get
-        {
-            if (_rectTransform == null)
-                _rectTransform = GetComponent<RectTransform>();
-
-            return _rectTransform;
-        }
+        public string Key;
+        public RectTransform RectTransform => _rectTransform ??= GetComponent<RectTransform>();
+        public Transform OriginalParent { get; set; }
+        public int OriginalSiblingIndex { get; set; }
+        
+        private RectTransform _rectTransform;
     }
-
-    public Transform OriginalParent { get; set; }
-    public int OriginalSiblingIndex { get; set; }
-
-    public string Key;
 }

@@ -3,6 +3,7 @@ namespace JOGUI
 {
     public interface IEvaluateType<T>
     {
-        T Evaluate(EaseType easeType, T startValue, T endValue, float t);
+        T GetChangeValue(T startValue, T endValue);
+        T Evaluate(T startValue, T changeValue, float t);
     }
 }

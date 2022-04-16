@@ -2,9 +2,14 @@
 {
     public class FloatEvaluator : IEvaluateType<float>
     {
-        public float Evaluate(EaseType easeType, float startValue, float endValue, float t)
+        public float GetChangeValue(float startValue, float endValue)
         {
-            return Ease.Evaluate(easeType, startValue, endValue, t);
+            return endValue - startValue;
+        }
+
+        public float Evaluate(float startValue, float changeValue, float t)
+        {
+            return startValue + changeValue * t;
         }
     }
 }

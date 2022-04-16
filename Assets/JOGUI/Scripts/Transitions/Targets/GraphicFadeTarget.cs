@@ -1,4 +1,5 @@
-﻿using UnityEngine.UI;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
 namespace JOGUI
 {
@@ -17,5 +18,7 @@ namespace JOGUI
             color.a = alpha;
             _target.color = color;
         }
+
+        public Object GetOnDestroyLink() => _target;
     }
 }

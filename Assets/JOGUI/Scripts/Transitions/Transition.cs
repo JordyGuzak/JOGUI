@@ -1,84 +1,127 @@
-﻿namespace JOGUI
+﻿using System.Linq;
+using UnityEngine;
+
+namespace JOGUI
 {
     public abstract class Transition
     {
         public delegate void TransitionCompleteHandler(Transition transition);
         public event TransitionCompleteHandler TransitionComplete;
+        
+        private static Camera _mainCamera;
+        protected static Camera MainCamera
+        {
+            get
+            {
+                if (!_mainCamera)
+                    _mainCamera = Camera.main;
+                return _mainCamera;
+            }
+        }
 
         public Transition Parent { get; set; }
-        public float StartDelay { get; protected set; } = 0f;
-        public virtual float Duration { get; protected set; } = 0.5f;
+        public float StartDelay => Options.StartDelay;
+        public virtual float Duration => Options.Duration;
         public virtual float TotalDuration => StartDelay + Duration;
-        public EaseType EaseType { get; protected set; } = EaseType.EaseInOutCubic;
-        public bool IsRunning { get; protected set; }
+        public EaseType EaseType => Options.EaseType;
+        public float OverShoot => Options.OverShoot;
+        public bool IsRunning { get; private set; }
 
-        protected ITween[] _tweens;
-        protected System.Action _onStartCallback;
-        protected System.Action _onCompleteCallback;
+        protected TransitionOptions Options;
+        protected System.Action OnStartCallback;
+        protected System.Action OnCompleteCallback;
+        private Tween[] _tweens;
 
+        protected Transition()
+        {
+            Options = Parent != null ? Parent.Options : new TransitionOptions();
+        }
+        
+        public abstract Tween[] CreateAnimators();
+        public abstract Transition Reversed();
+
+        public virtual void Run()
+        {
+            OnTransitionStart();
+            _tweens = CreateAnimators();
+            SetupCompleteListeners(_tweens);
+            UITweenRunner.Instance.Play(_tweens);
+        }
+
+        public virtual void Skip()
+        {
+            foreach (var tween in _tweens)
+                tween.SetLastFrame();
+            Cancel();
+        }
+
+        public virtual void Cancel()
+        {
+            foreach (var tween in _tweens)
+                tween.Stop();
+        }
+
+        public void SetFirstFrame()
+        {
+            if (_tweens == null || _tweens.Length == 0)
+                _tweens = CreateAnimators();
+            foreach (var tween in _tweens)
+                tween.SetLastFrame();
+        }
+
+        public void SetLastFrame()
+        {
+            if (_tweens == null || _tweens.Length == 0)
+                _tweens = CreateAnimators();
+            foreach (var tween in _tweens)
+                tween.SetLastFrame();
+        }
+        
         public Transition SetStartDelay(float startDelay)
         {
-            StartDelay = startDelay;
+            Options.StartDelay = startDelay;
             return this;
         }
 
         public Transition SetDuration(float duration)
         {
-            Duration = duration;
+            Options.Duration = duration;
             return this;
         }
 
         public Transition SetEaseType(EaseType easeType)
         {
-            EaseType = easeType;
+            Options.EaseType = easeType;
+            return this;
+        }
+
+        public Transition SetOverShoot(float overShoot)
+        {
+            Options.OverShoot = overShoot;
+            return this;
+        }
+
+        public Transition SetOptions(TransitionOptions options)
+        {
+            Options = options ?? new TransitionOptions();
             return this;
         }
 
         public Transition SetOnStart(System.Action onStart)
         {
-            _onStartCallback = onStart;
+            OnStartCallback = onStart;
             return this;
         }
 
         public Transition SetOnComplete(System.Action onComplete)
         {
-            _onCompleteCallback = onComplete;
+            OnCompleteCallback = onComplete;
             return this;
         }
 
-        protected abstract ITween[] CreateAnimators();
-        public abstract Transition Reversed();
-
-        public virtual void Run()
+        protected virtual void SetupCompleteListeners(Tween[] tweens)
         {
-            _tweens = CreateAnimators();
-            SetupCompleteListeners(_tweens);
-            OnTransitionStart();
-            UITweenRunner.Instance.Play(_tweens);
-        }
-        
-        public void Cancel()
-        {
-            if (_tweens == null) return;
-
-            foreach (var t in _tweens)
-            {
-                t.Stop();
-            }
-        }
-
-        protected virtual void SetupCompleteListeners(ITween[] tweens)
-        {
-            ITween longest = null;
-            foreach (var tween in tweens)
-            {
-                if (longest == null || tween.TotalDuration > longest.TotalDuration)
-                    longest = tween;
-
-                if (Parent == null) continue;
-                tween.StartDelay += Parent.StartDelay;
-            }
-            
+            var longest = tweens.OrderByDescending(t => t.TotalDuration).FirstOrDefault();
             if (longest != null)
             {
                 longest.OnAnimationFinished += OnLastAnimationFinished;
@@ -92,17 +135,17 @@
         protected virtual void OnTransitionStart()
         {
             IsRunning = true;
-            _onStartCallback?.Invoke();
+            OnStartCallback?.Invoke();
         }
 
         protected virtual void OnTransitionComplete()
         {
             IsRunning = false;
-            _onCompleteCallback?.Invoke();
+            OnCompleteCallback?.Invoke();
             TransitionComplete?.Invoke(this);
         }
 
-        protected void OnLastAnimationFinished(ITween tween)
+        protected void OnLastAnimationFinished(Tween tween)
         {
             tween.OnAnimationFinished -= OnLastAnimationFinished;
             OnTransitionComplete();

@@ -22,22 +22,20 @@ namespace JOGUI
             }
         }
 
-        public bool IsPlaying => _runningTweens.Count > 0 && _runningTweens[0].IsPlaying();
+        public bool IsPlaying => _runningTweens.Count > 0;
 
-        private List<ITween> _runningTweens = new List<ITween>();
+        private List<Tween> _runningTweens = new List<Tween>();
 
         private void Update()
         {
             if (!IsPlaying)
                 return;
 
-            for (int i = 0; i < _runningTweens.Count; i++)
-            {
+            for (var i = 0; i < _runningTweens.Count; i++)
                 _runningTweens[i].Tick();
-            }
         }
 
-        public void Play(params ITween[] tweens)
+        public void Play(params Tween[] tweens)
         {
             for (int i = 0; i < tweens.Length; i++)
             {
@@ -50,7 +48,8 @@ namespace JOGUI
                 else
                 {
                     tween.Play();
-                    tween.OnAnimationFinished += OnAnimationFinished;
+                    tween.OnAnimationFinished += Remove;
+                    tween.OnAnimationKilled += Remove;
                     _runningTweens.Add(tween);
                 }
             }
@@ -72,9 +71,10 @@ namespace JOGUI
             }
         }
 
-        private void OnAnimationFinished(ITween tween)
+        private void Remove(Tween tween)
         {
-            tween.OnAnimationFinished -= OnAnimationFinished;
+            tween.OnAnimationFinished -= Remove;
+            tween.OnAnimationKilled -= Remove;
             _runningTweens.Remove(tween);
         }
     }

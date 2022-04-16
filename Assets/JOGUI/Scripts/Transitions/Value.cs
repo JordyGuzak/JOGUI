@@ -18,15 +18,16 @@
             return this;
         }
 
-        protected override ITween[] CreateAnimators()
+        public override Tween[] CreateAnimators()
         {
-            return new ITween[] 
+            return new Tween[] 
             {
                 new UITween<T>(_startValue, _endValue)
+                    .SetOnUpdate(_setter)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(_setter)
+                    .SetOverShoot(OverShoot)
             };
         }
 
@@ -34,10 +35,9 @@
         {
             return new Value<T>(_endValue, _startValue)
                 .SetOnUpdate(_setter)
-                .SetStartDelay(StartDelay)
-                .SetDuration(Duration)
-                .SetEaseType(EaseType)
-                .SetOnComplete(_onCompleteCallback);
+                .SetOptions(Options)
+                .SetOnStart(OnStartCallback)
+                .SetOnComplete(OnCompleteCallback);
         }
     }
 }

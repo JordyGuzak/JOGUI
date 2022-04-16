@@ -4,7 +4,6 @@ namespace JOGUI.Examples
 {
     public class ItemsView : View
     {
-
         public override Transition GetEnterTransition()
         {
             return new Slide(Vector2.zero, SlideMode.IN, Direction.RIGHT).AddTarget(RectTransform);

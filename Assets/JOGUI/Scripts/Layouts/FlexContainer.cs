@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using JOGUI.Extensions;
+using UnityEngine.UI;
 
 namespace JOGUI
 {
@@ -25,7 +23,7 @@ namespace JOGUI
     {
         Start,
         Center,
-        End
+        End,
     }
 
     public enum AlignItems
@@ -41,7 +39,8 @@ namespace JOGUI
         Start,
         Center,
         End,
-        Stretch
+        Stretch,
+        SpaceBetween
     }
 
     [DisallowMultipleComponent]
@@ -80,39 +79,39 @@ namespace JOGUI
             }
         }
         
-        [SerializeField] protected FlexDirection _flexDirection;
+        [SerializeField] protected FlexDirection flexDirection;
         public FlexDirection FlexDirection
         {
-            get => _flexDirection;
-            set => SetProperty(ref _flexDirection, value);
+            get => flexDirection;
+            set => SetProperty(ref flexDirection, value);
         }
 
-        [SerializeField] protected WrapMode _wrapMode;
+        [SerializeField] protected WrapMode wrapMode = WrapMode.NoWrap;
         public WrapMode WrapMode
         {
-            get => _wrapMode;
-            set => SetProperty(ref _wrapMode, value);
+            get => wrapMode;
+            set => SetProperty(ref wrapMode, value);
         }
 
-        [SerializeField] protected JustifyContent _justifyContent;
+        [SerializeField] protected JustifyContent justifyContent;
         public JustifyContent JustifyContent
         {
-            get => _justifyContent;
-            set => SetProperty(ref _justifyContent, value);
+            get => justifyContent;
+            set => SetProperty(ref justifyContent, value);
         }
         
-        [SerializeField] protected AlignContent _alignContent;
+        [SerializeField] protected AlignContent alignContent;
         public AlignContent AlignContent
         {
-            get => _alignContent;
-            set => SetProperty(ref _alignContent, value);
+            get => alignContent;
+            set => SetProperty(ref alignContent, value);
         }
         
-        [SerializeField] protected AlignItems _alignItems;
+        [SerializeField] protected AlignItems alignItems;
         public AlignItems AlignItems
         {
-            get => _alignItems;
-            set => SetProperty(ref _alignItems, value);
+            get => alignItems;
+            set => SetProperty(ref alignItems, value);
         }
 
         [SerializeField] protected float _spacing;
@@ -122,18 +121,25 @@ namespace JOGUI
             set => SetProperty(ref _spacing, value);
         }
 
-        [SerializeField] protected bool _fitContentHorizontally;
-        public bool FitContentHorizontally
+        [SerializeField] protected RectOffset _padding;
+        public RectOffset Padding
         {
-            get => _fitContentHorizontally;
-            set => SetProperty(ref _fitContentHorizontally, value);
+            get => _padding;
+            set => SetProperty(ref _padding, value);
         }
         
-        [SerializeField] protected bool _fitContentVertically;
-        public bool FitContentVertically
+        [SerializeField] protected bool fitHorizontal;
+        public bool FitHorizontal
         {
-            get => _fitContentVertically;
-            set => SetProperty(ref _fitContentVertically, value);
+            get => fitHorizontal;
+            set => SetProperty(ref fitHorizontal, value);
+        }
+        
+        [SerializeField] protected bool fitVertical;
+        public bool FitVertical
+        {
+            get => fitVertical;
+            set => SetProperty(ref fitVertical, value);
         }
 
         private RectTransform _rectTransform;
@@ -187,7 +193,7 @@ namespace JOGUI
 
                 // position flex element
                 var pivot = elementRect.pivot;
-                elementRect.anchoredPosition = new Vector2(positionPointer.x + elementSize.x * pivot.x, positionPointer.y - elementSize.y * (1f - pivot.y));
+                elementRect.anchoredPosition = new Vector2(positionPointer.x + elementSize.x * pivot.x + (mainAxis == 0 ? Padding.left : 0), positionPointer.y - elementSize.y * (1f - pivot.y));
 
                 // move position pointer
                 positionPointer[mainAxis] += (elementSize[mainAxis] + Spacing) * (mainAxis == 0 ? 1 : -1);
@@ -209,8 +215,8 @@ namespace JOGUI
             ApplyJustifyContent(mainAxis, container.rect.size, lines);
             ApplyAlignContent(crossAxis, container.rect.size, lines);
             ApplyAlignItems(crossAxis, lines);
-            if(FitContentHorizontally) ApplyFitContent(0, container, lines);
-            if(FitContentVertically) ApplyFitContent(1, container, lines);
+            if(FitHorizontal) ApplyFitContent(0, container, lines);
+            if(FitVertical) ApplyFitContent(1, container, lines);
             _isDirty = false;
         }
         
@@ -261,11 +267,12 @@ namespace JOGUI
         private void ApplyJustifyContent(int mainAxis, Vector2 containerSize, List<Line> lines)
         {
             if (lines.Count == 0) return;
-            
+
+            var offset = 0f;
+
             var largestLine = lines.OrderByDescending(l => l.UsedSpace[mainAxis]).First();
             var max = largestLine.UsedSpace[mainAxis] + (largestLine.Items.Count - 1) * Spacing;
-            
-            float offset = 0;
+
             switch (JustifyContent)
             {
                 case JustifyContent.Start:
@@ -293,6 +300,13 @@ namespace JOGUI
 
         private void ApplyAlignContent(int crossAxis, Vector2 containerSize, List<Line> lines)
         {
+            switch (AlignContent)
+            {
+                case AlignContent.SpaceBetween:
+                    ApplyAlignContentSpaceBetween(crossAxis, containerSize, lines);
+                    return;
+            }
+            
             var positionPointer = Vector2.zero;
             var contentSize = Vector2.zero;
             var offsetMultiplier = 0f;
@@ -339,6 +353,29 @@ namespace JOGUI
             }
         }
 
+        private void ApplyAlignContentSpaceBetween(int crossAxis, Vector2 containerSize, List<Line> lines)
+        {
+            var usedSpace = lines.Sum(l => l.UsedSpace[crossAxis]);
+            var availableSpace = containerSize[crossAxis] - usedSpace;
+            var offset = availableSpace / (lines.Count - 1);
+            var positionPointer = Vector2.zero;
+            
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i];
+                var size = line.Size;
+                size[crossAxis] = line.UsedSpace[crossAxis];
+                line.Size = size;
+
+                if (i > 0)
+                {
+                    positionPointer[crossAxis] += lines[i - 1].Size[crossAxis] + offset;
+                }
+
+                line.Position = positionPointer;
+            }
+        }
+
         private void ApplyAlignItems(int crossAxis, List<Line> lines)
         {
             for (int i = 0; i < lines.Count; i++)
@@ -379,16 +416,37 @@ namespace JOGUI
 
         private void ApplyFitContent(int axis, RectTransform container, List<Line> lines)
         {
+            if (lines.Count == 0) return;
+
             var requiredSize = axis == lines[0].MainAxis 
-                ? lines.Max(l => l.UsedSpace[axis] + (l.Items.Count - 1) * Spacing) 
-                : lines.Sum(l => l.UsedSpace[axis]) + (lines.Count - 1) * Spacing;
-            container.SetSizeWithCurrentAnchors(axis == 0 ? RectTransform.Axis.Horizontal : RectTransform.Axis.Vertical, requiredSize);
+                ? lines.Max(l => l.UsedSpace[axis] + Padding.left + Padding.right +(l.Items.Count - 1) * Spacing) 
+                : lines.Sum(l => l.UsedSpace[axis]) + Padding.top + Padding.bottom + (lines.Count - 1) * Spacing;
+
+            if (container.TryGetComponent<FlexElement>(out var flexElement))
+            {
+                var basis = flexElement.FlexBasis;
+                basis[axis] = requiredSize;
+                flexElement.FlexBasis = basis;
+            }
+            else if (container.TryGetComponent<LayoutElement>(out var layoutElement))
+            {
+                if (axis == 0)
+                    layoutElement.preferredWidth = requiredSize;
+                else
+                    layoutElement.preferredHeight = requiredSize;
+            }
+            else
+            {
+                container.SetSizeWithCurrentAnchors(axis == 0 ? RectTransform.Axis.Horizontal : RectTransform.Axis.Vertical, requiredSize);
+            }
         }
 
         public void SetDirty()
         {
             _isDirty = true;
         }
+
+        public void ForceRebuildImmediate() => SetLayout();
         
         private void SetProperty<T>(ref T currentValue, T newValue)
         {

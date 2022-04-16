@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using JOGUI.Extensions;
 using UnityEngine;
 
 namespace JOGUI
@@ -12,29 +13,40 @@ namespace JOGUI
         private Direction _direction;
         private Vector2 _anchoredPosition;
         private List<RectTransform> _targets = new List<RectTransform>();
+        private RenderMode _renderMode;
 
         public Slide(Vector2 anchoredPosition, SlideMode mode, Direction direction)
         {
             _anchoredPosition = anchoredPosition;
             _mode = mode;
             _direction = direction;
+            _renderMode = RenderMode.ScreenSpaceCamera;
         }
 
-        protected override ITween[] CreateAnimators()
+        public override Tween[] CreateAnimators()
         {
-            var tweens = new List<ITween>();
+            var tweens = new List<Tween>();
+
+            var scaleFactor = 1f;
+            if (_targets.Count > 0 && _targets[0].TryGetComponentInParent<Canvas>(out var canvas))
+            {
+                scaleFactor = canvas.scaleFactor;
+                _renderMode = canvas.renderMode;
+            }
 
             for (int i = 0; i < _targets.Count; i++)
             {
                 var rectTransform = _targets[i];
-                var outOfScreenPosition = GetOutOfScreenAnchoredPosition(rectTransform, _direction);
+                var outOfScreenPosition = GetOutOfScreenPosition(rectTransform, _direction, scaleFactor, MainCamera);
                 var startValue = _mode == SlideMode.OUT ? _anchoredPosition : outOfScreenPosition;
                 var endValue = _mode == SlideMode.OUT ? outOfScreenPosition : _anchoredPosition;
                 tweens.Add(new UITween<Vector2>(startValue, endValue)
+                    .SetOnUpdate(value => rectTransform.anchoredPosition = value)
                     .SetDelay(StartDelay)
                     .SetDuration(Duration)
                     .SetEase(EaseType)
-                    .SetOnUpdate(value => rectTransform.anchoredPosition = value));
+                    .SetOverShoot(OverShoot)
+                    .SetLink(rectTransform));
             }
 
             return tweens.ToArray();
@@ -49,10 +61,9 @@ namespace JOGUI
                 reversed.AddTarget(target);
             }
 
-            return reversed.SetStartDelay(StartDelay)
-                .SetDuration(Duration)
-                .SetEaseType(EaseType)
-                .SetOnComplete(_onCompleteCallback);
+            return reversed.SetOptions(Options)
+                .SetOnStart(OnStartCallback)
+                .SetOnComplete(OnCompleteCallback);
         }
 
         public Slide AddTarget(RectTransform target)
@@ -68,45 +79,30 @@ namespace JOGUI
         {
             return mode == SlideMode.IN ? SlideMode.OUT : SlideMode.IN;
         }
-
-        private Vector2 GetOutOfScreenAnchoredPosition(RectTransform rectTransform, Direction direction)
+        
+        private Vector2 GetOutOfScreenPosition(RectTransform rectTransform, Direction direction, float scaleFactor, Camera cam)
         {
-            var camera = Camera.main;
-            var canvas = rectTransform.GetComponentInParent<Canvas>().rootCanvas;
-            var screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rectTransform.position);
-            var targetPos = Vector2.zero;
+            var screenSize = new Vector2(Screen.width, Screen.height) / scaleFactor;
+            var screenPosition = RectTransformUtility.WorldToScreenPoint(_renderMode == RenderMode.ScreenSpaceOverlay ? null : cam, rectTransform.position) / scaleFactor;
 
+            var result = rectTransform.anchoredPosition;
             switch (direction)
             {
                 case Direction.LEFT:
-                    targetPos = new Vector2(0 - rectTransform.rect.width * canvas.scaleFactor * rectTransform.pivot.x, screenPosition.y);
+                    result.x -= screenPosition.x + rectTransform.rect.width * (1 - rectTransform.pivot.x);
                     break;
                 case Direction.RIGHT:
-                    targetPos = new Vector2(Screen.width + rectTransform.rect.width * canvas.scaleFactor * rectTransform.pivot.x, screenPosition.y);
+                    result.x += screenSize.x - screenPosition.x + rectTransform.rect.width * rectTransform.pivot.x;
                     break;
                 case Direction.UP:
-                    targetPos = new Vector2(screenPosition.x, Screen.height + rectTransform.rect.height * canvas.scaleFactor * rectTransform.pivot.y);
+                    result.y += screenSize.y - screenPosition.y + rectTransform.rect.height * rectTransform.pivot.y;
                     break;
                 case Direction.DOWN:
-                    targetPos = new Vector2(screenPosition.x, -rectTransform.rect.height * canvas.scaleFactor + rectTransform.rect.height * canvas.scaleFactor * rectTransform.pivot.y);
+                    result.y -= screenPosition.y + rectTransform.rect.height * (1 - rectTransform.pivot.y);
                     break;
             }
 
-            var anchoredPosition = rectTransform.anchoredPosition + (targetPos - screenPosition);
-
-            switch (direction)
-            {
-                case Direction.LEFT:
-                case Direction.RIGHT:
-                    anchoredPosition.y = _anchoredPosition.y;
-                    break;
-                case Direction.UP:
-                case Direction.DOWN:
-                    anchoredPosition.x = _anchoredPosition.x;
-                    break;
-            }
-
-            return anchoredPosition;
+            return result;
         }
     }
 }

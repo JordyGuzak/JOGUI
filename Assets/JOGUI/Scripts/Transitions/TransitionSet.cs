@@ -3,12 +3,16 @@ using System.Linq;
 
 namespace JOGUI
 {
-    public enum TransitionMode { PARALLEL, SEQUENTIAL }
+    public enum TransitionMode
+    {
+        PARALLEL,
+        SEQUENTIAL
+    }
 
     public class TransitionSet : Transition
     {
-        public override float Duration => Mode == TransitionMode.PARALLEL ? Transitions.Max(t => t.Duration) : Transitions.Sum(t => t.Duration);
-        public TransitionMode Mode { get; private set; }
+        public override float Duration => Transitions == null || Transitions.Count == 0 ? 0f : Mode == TransitionMode.PARALLEL ? Transitions.Max(t => t.Duration) : Transitions.Sum(t => t.Duration);
+        public TransitionMode Mode { get; }
         public readonly LinkedList<Transition> Transitions;
         private LinkedListNode<Transition> _currentNode;
 
@@ -34,9 +38,14 @@ namespace JOGUI
             return this;
         }
 
-        protected override ITween[] CreateAnimators()
+        public override Tween[] CreateAnimators()
         {
-            return default;
+            var tweens = new List<Tween>();
+
+            foreach (var transition in Transitions)
+                tweens.AddRange(transition.CreateAnimators());
+
+            return tweens.ToArray();
         }
 
         public override Transition Reversed()
@@ -51,11 +60,9 @@ namespace JOGUI
             }
 
             return reversed
-                .SetStartDelay(StartDelay)
-                .SetDuration(Duration)
-                .SetEaseType(EaseType)
-                .SetOnStart(_onStartCallback)
-                .SetOnComplete(_onCompleteCallback);
+                .SetOptions(Options)
+                .SetOnStart(OnStartCallback)
+                .SetOnComplete(OnCompleteCallback);
         }
 
         public override void Run()
@@ -67,25 +74,34 @@ namespace JOGUI
                 OnTransitionComplete();
                 return;
             }
-            
+
             switch (Mode)
             {
                 case TransitionMode.PARALLEL:
                     var longest = Transitions.OrderByDescending(t => t.TotalDuration).FirstOrDefault();
                     if (longest != null)
-                    {
                         longest.TransitionComplete += OnLongestTransitionComplete;
-                    }
-                    
+
                     foreach (var transition in Transitions)
-                    {
                         transition.Run();
-                    }
+
                     break;
                 case TransitionMode.SEQUENTIAL:
                     Run(Transitions.First);
                     break;
             }
+        }
+
+        public override void Skip()
+        {
+            foreach (var transition in Transitions)
+                transition.Skip();
+        }
+
+        public override void Cancel()
+        {
+            foreach (var transition in Transitions)
+                transition.Cancel();
         }
 
         private void Run(LinkedListNode<Transition> node)
@@ -100,6 +116,40 @@ namespace JOGUI
             var transition = node.Value;
             transition.TransitionComplete += OnChildTransitionComplete;
             transition.Run();
+        }
+
+        protected override void OnTransitionStart()
+        {
+            base.OnTransitionStart();
+
+            if (Mode == TransitionMode.SEQUENTIAL && Transitions.Count > 0)
+            {
+                var first = Transitions.First.Value;
+                first.SetStartDelay(first.StartDelay + StartDelay);
+                return;
+            }
+
+            foreach (var transition in Transitions)
+            {
+                transition.SetStartDelay(transition.StartDelay + StartDelay);
+            }
+        }
+
+        protected override void OnTransitionComplete()
+        {
+            base.OnTransitionComplete();
+
+            if (Mode == TransitionMode.SEQUENTIAL && Transitions.Count > 0)
+            {
+                var transition = Transitions.First.Value;
+                transition.SetStartDelay(transition.StartDelay - StartDelay);
+                return;
+            }
+
+            foreach (var transition in Transitions)
+            {
+                transition.SetStartDelay(transition.StartDelay - StartDelay);
+            }
         }
 
         private void OnChildTransitionComplete(Transition transition)
