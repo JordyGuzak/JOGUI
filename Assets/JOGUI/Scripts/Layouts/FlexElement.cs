@@ -1,12 +1,12 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace JOGUI
 {
     [DisallowMultipleComponent]
     [ExecuteAlways]
     [RequireComponent(typeof(RectTransform))]
-    public class FlexElement : MonoBehaviour
+    public class FlexElement : UIBehaviour
     {
         [SerializeField] private float _flexGrow;
         public float FlexGrow
@@ -69,12 +69,12 @@ namespace JOGUI
         }
         
 #if UNITY_EDITOR
-        protected void OnValidate()
+        protected override void OnValidate()
         {
             SetDirty();
         }
 
-        protected void Reset()
+        protected override void Reset()
         {
             SetDirty();
         }

@@ -50,19 +50,19 @@ namespace JOGUI
                 case EaseType.EaseOutQuad:
                     return (float) (-(double) (time /= duration) * ((double) time - 2.0));
                 case EaseType.EaseInOutQuad:
-                    return (double) (time /= duration * 0.5f) < 1.0 ? 0.5f * time * time : (float) (-0.5 * ((double) --time * ((double) time - 2.0) - 1.0));
+                    return (time /= duration * 0.5f) < 1.0 ? 0.5f * time * time : (float) (-0.5 * (--time * (time - 2.0) - 1.0));
                 case EaseType.EaseInCubic:
                     return (time /= duration) * time * time;
                 case EaseType.EaseOutCubic:
-                    return (float) ((double) (time = (float) ((double) time / (double) duration - 1.0)) * (double) time * (double) time + 1.0);
+                    return (float) ((double) (time = (float) ((double) time / duration - 1.0)) * time * time + 1.0);
                 case EaseType.EaseInOutCubic:
-                    return (double) (time /= duration * 0.5f) < 1.0 ? 0.5f * time * time * time : (float) (0.5 * ((double) (time -= 2f) * (double) time * (double) time + 2.0));
+                    return (time /= duration * 0.5f) < 1.0 ? 0.5f * time * time * time : (float) (0.5 * ((time -= 2f) * (double) time * time + 2.0));
                 case EaseType.EaseInQuart:
                     return (time /= duration) * time * time * time;
                 case EaseType.EaseOutQuart:
-                    return (float) -((double) (time = (float) ((double) time / (double) duration - 1.0)) * (double) time * (double) time * (double) time - 1.0);
+                    return (float) -((time = (float) (time / (double) duration - 1.0)) * (double) time * time * time - 1.0);
                 case EaseType.EaseInOutQuart:
-                    return (double) (time /= duration * 0.5f) < 1.0 ? 0.5f * time * time * time * time : (float) (-0.5 * ((double) (time -= 2f) * (double) time * (double) time * (double) time - 2.0));
+                    return (time /= duration * 0.5f) < 1.0 ? 0.5f * time * time * time * time : (float) (-0.5 * ((time -= 2f) * (double) time * time * time - 2.0));
                 case EaseType.EaseInQuint:
                     return (time /= duration) * time * time * time * time;
                 case EaseType.EaseOutQuint:
@@ -155,45 +155,27 @@ namespace JOGUI
 
         public static float Evaluate(EaseType easeType, float startValue, float endValue, float t)
         {
-            switch (easeType)
+            return easeType switch
             {
-                case EaseType.Linear:
-                    return Linear(startValue, endValue, t);
-                case EaseType.Spring:
-                    return Spring(startValue, endValue, t);
-                case EaseType.EaseInQuad:
-                    return EaseInQuad(startValue, endValue, t);
-                case EaseType.EaseOutQuad:
-                    return EaseOutQuad(startValue, endValue, t);
-                case EaseType.EaseInOutQuad:
-                    return EaseInOutQuad(startValue, endValue, t);
-                case EaseType.EaseInCubic:
-                    return EaseInCubic(startValue, endValue, t);
-                case EaseType.EaseOutCubic:
-                    return EaseOutCubic(startValue, endValue, t);
-                case EaseType.EaseInOutCubic:
-                    return EaseInOutCubic(startValue, endValue, t);
-                case EaseType.EaseInBounce:
-                    return EaseInBounce(startValue, endValue, t);
-                case EaseType.EaseOutBounce:
-                    return EaseOutBounce(startValue, endValue, t);
-                case EaseType.EaseInElastic:
-                    return EaseInElastic(startValue, endValue, t);
-                case EaseType.EaseOutElastic:
-                    return EaseOutElastic(startValue, endValue, t);
-                case EaseType.EaseInOutElastic:
-                    return EaseInOutElastic(startValue, endValue, t);
-                case EaseType.EaseInOutBounce:
-                    return EaseInOutBounce(startValue, endValue, t);
-                case EaseType.EaseInBack:
-                    return EaseInBack(startValue, endValue, t);
-                case EaseType.EaseOutBack:
-                    return EaseOutBack(startValue, endValue, t);
-                case EaseType.EaseInOutBack:
-                    return EaseInOutBack(startValue, endValue, t);
-                default:
-                    return Linear(startValue, endValue, t);
-            }
+                EaseType.Linear => Linear(startValue, endValue, t),
+                EaseType.Spring => Spring(startValue, endValue, t),
+                EaseType.EaseInQuad => EaseInQuad(startValue, endValue, t),
+                EaseType.EaseOutQuad => EaseOutQuad(startValue, endValue, t),
+                EaseType.EaseInOutQuad => EaseInOutQuad(startValue, endValue, t),
+                EaseType.EaseInCubic => EaseInCubic(startValue, endValue, t),
+                EaseType.EaseOutCubic => EaseOutCubic(startValue, endValue, t),
+                EaseType.EaseInOutCubic => EaseInOutCubic(startValue, endValue, t),
+                EaseType.EaseInBounce => EaseInBounce(startValue, endValue, t),
+                EaseType.EaseOutBounce => EaseOutBounce(startValue, endValue, t),
+                EaseType.EaseInElastic => EaseInElastic(startValue, endValue, t),
+                EaseType.EaseOutElastic => EaseOutElastic(startValue, endValue, t),
+                EaseType.EaseInOutElastic => EaseInOutElastic(startValue, endValue, t),
+                EaseType.EaseInOutBounce => EaseInOutBounce(startValue, endValue, t),
+                EaseType.EaseInBack => EaseInBack(startValue, endValue, t),
+                EaseType.EaseOutBack => EaseOutBack(startValue, endValue, t),
+                EaseType.EaseInOutBack => EaseInOutBack(startValue, endValue, t),
+                _ => Linear(startValue, endValue, t)
+            };
         }
 
         public static float Linear(float start, float end, float value)

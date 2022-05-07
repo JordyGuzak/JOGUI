@@ -31,16 +31,14 @@ namespace JOGUI
             if (!IsPlaying)
                 return;
 
-            for (var i = 0; i < _runningTweens.Count; i++)
-                _runningTweens[i].Tick();
+            foreach (var t in _runningTweens)
+                t.Tick();
         }
 
         public void Play(params Tween[] tweens)
         {
-            for (int i = 0; i < tweens.Length; i++)
+            foreach (var tween in tweens)
             {
-                var tween = tweens[i];
-
                 if (_runningTweens.Contains(tween))
                 {
                     tween.PlayFromStart();
