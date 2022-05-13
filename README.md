@@ -10,7 +10,11 @@ A Unity uGUI framework.
 
 ## Transitions
 * Fade
+* CrossFade
 * Slide
+* Move
+* Scale
+* Size
 * Value
 * Shared Element Transition
 * Transition Set (run a set of transitions sequentially or in parallel)
