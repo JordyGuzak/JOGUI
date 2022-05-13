@@ -17,4 +17,4 @@ A Unity uGUI framework.
 * Size
 * Value
 * Shared Element Transition
-* Transition Set (run a set of transitions sequentially or in parallel)
+* Transition Set -> run a set of transitions **sequentially** or in **parallel**
