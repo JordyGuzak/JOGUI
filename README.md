@@ -1,6 +1,6 @@
 # JOGUI
 
-A Unity uGUI framework.
+An Unity uGUI framework.
 
 ## Features
 * Views
